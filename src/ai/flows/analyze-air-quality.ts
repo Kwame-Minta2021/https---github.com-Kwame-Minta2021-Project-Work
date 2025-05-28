@@ -1,9 +1,10 @@
+
 // src/ai/flows/analyze-air-quality.ts
 'use server';
 /**
- * @fileOverview Analyzes air quality data and provides a health impact assessment.
+ * @fileOverview Analyzes air quality data and provides a health impact assessment and best actions, simulating an RL model.
  *
- * - analyzeAirQuality - A function that analyzes air quality and provides a health impact assessment.
+ * - analyzeAirQuality - A function that analyzes air quality and provides health effects and best actions.
  * - AnalyzeAirQualityInput - The input type for the analyzeAirQuality function.
  * - AnalyzeAirQualityOutput - The return type for the analyzeAirQuality function.
  */
@@ -22,8 +23,8 @@ const AnalyzeAirQualityInputSchema = z.object({
 export type AnalyzeAirQualityInput = z.infer<typeof AnalyzeAirQualityInputSchema>;
 
 const AnalyzeAirQualityOutputSchema = z.object({
-  healthImpact: z.string().describe('A detailed assessment of the potential health impacts based on the air quality data.'),
-  recommendations: z.string().describe('Actionable recommendations to mitigate the presence of detected pollutants.'),
+  effectOnHumanHealth: z.string().describe('A concise, user-friendly statement detailing the health implications of the detected air quality levels, as if determined by an RL model.'),
+  bestActionToReducePresence: z.string().describe('Specific, actionable recommendations to improve air quality, identified as the optimal action(s) as if by an RL model.'),
 });
 export type AnalyzeAirQualityOutput = z.infer<typeof AnalyzeAirQualityOutputSchema>;
 
@@ -32,10 +33,10 @@ export async function analyzeAirQuality(input: AnalyzeAirQualityInput): Promise<
 }
 
 const analyzeAirQualityPrompt = ai.definePrompt({
-  name: 'analyzeAirQualityPrompt',
+  name: 'analyzeAirQualityRLSimPrompt', // Renamed for clarity
   input: {schema: AnalyzeAirQualityInputSchema},
   output: {schema: AnalyzeAirQualityOutputSchema},
-  prompt: `You are an expert in environmental science and public health. Analyze the following air quality data to determine the potential health impacts and provide actionable recommendations to mitigate the presence of detected pollutants.
+  prompt: `You are an advanced Reinforcement Learning (RL) model pre-trained on diverse air quality datasets, health outcomes, and environmental interventions. Your task is to analyze the following air quality data. Based on your learned policy, assess the current conditions, predict the "Effect on Human Health", and recommend the "Best Action to Reduce Presence" of pollutants.
 
 Air Quality Data:
 CO (Carbon Monoxide): {{co}} ppm
@@ -45,13 +46,15 @@ PM1.0 (Particulate Matter 1.0): {{pm10}} ug/m3
 PM2.5 (Particulate Matter 2.5): {{pm25}} ug/m3
 PM10 (Particulate Matter 10): {{pm100}} ug/m3
 
-Based on this data, provide a concise yet comprehensive health impact assessment and suggest practical recommendations to improve air quality.
+Based on this data, provide:
+1.  Effect on Human Health: A concise, user-friendly statement detailing the health implications.
+2.  Best Action to Reduce Presence: Specific, actionable recommendations to improve air quality.
 `,
 });
 
 const analyzeAirQualityFlow = ai.defineFlow(
   {
-    name: 'analyzeAirQualityFlow',
+    name: 'analyzeAirQualityRLSimFlow', // Renamed for clarity
     inputSchema: AnalyzeAirQualityInputSchema,
     outputSchema: AnalyzeAirQualityOutputSchema,
   },
@@ -60,3 +63,4 @@ const analyzeAirQualityFlow = ai.defineFlow(
     return output!;
   }
 );
+
