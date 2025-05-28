@@ -2,12 +2,45 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { BarChart, LineChart as RechartsLineChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, CartesianGrid, Bar, Line } from 'recharts';
-import { MOCK_HISTORICAL_DATA, MOCK_BAR_CHART_DATA, CHART_CONFIG } from '@/lib/constants';
+import { BarChart, LineChart as RechartsLineChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, CartesianGrid, Bar, Line, Cell } from 'recharts';
+import { MOCK_BAR_CHART_DATA, CHART_CONFIG } from '@/lib/constants';
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
+import type { HistoricalDataPoint } from '@/types';
+import { parseISO, format, differenceInDays } from 'date-fns';
 
+interface DataVisualizationProps {
+  historicalData: HistoricalDataPoint[];
+}
 
-export default function DataVisualization() {
+export default function DataVisualization({ historicalData }: DataVisualizationProps) {
+  const xAxisTickFormatter = (isoTimestamp: string) => {
+    if (!historicalData || historicalData.length === 0) return isoTimestamp;
+    
+    // Ensure valid date objects before calling differenceInDays
+    let firstDate: Date | null = null;
+    let lastDate: Date | null = null;
+
+    try {
+      firstDate = parseISO(historicalData[0].timestamp);
+      lastDate = parseISO(historicalData[historicalData.length - 1].timestamp);
+    } catch (e) {
+      // console.error("Error parsing date for tick formatter:", e);
+      return format(parseISO(isoTimestamp), 'HH:mm'); // Fallback to time if parsing fails
+    }
+    
+    // Check if dates are valid after parsing
+    if (!(firstDate instanceof Date && !isNaN(firstDate.valueOf())) || !(lastDate instanceof Date && !isNaN(lastDate.valueOf()))) {
+      return format(parseISO(isoTimestamp), 'HH:mm'); // Fallback if dates are invalid
+    }
+
+    const dayDiff = differenceInDays(lastDate, firstDate);
+
+    if (dayDiff > 1) {
+      return format(parseISO(isoTimestamp), 'MMM d'); 
+    }
+    return format(parseISO(isoTimestamp), 'HH:mm'); 
+  };
+  
   return (
     <section id="visualizations" className="mb-8 scroll-mt-20">
       <h2 className="text-2xl font-semibold tracking-tight mb-4">Data Visualizations</h2>
@@ -21,13 +54,19 @@ export default function DataVisualization() {
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle>Pollutant Trends Over Time</CardTitle>
-              <CardDescription>Hourly trends for key pollutants.</CardDescription>
+              <CardDescription>Hourly trends for key pollutants based on selected date range.</CardDescription>
             </CardHeader>
             <CardContent>
               <ChartContainer config={CHART_CONFIG} className="h-[400px] w-full">
-                <RechartsLineChart data={MOCK_HISTORICAL_DATA} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                <RechartsLineChart data={historicalData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} />
+                  <XAxis 
+                    dataKey="timestamp" 
+                    tickFormatter={xAxisTickFormatter} 
+                    tickLine={false} 
+                    axisLine={false} 
+                    tickMargin={8} 
+                  />
                   <YAxis tickLine={false} axisLine={false} tickMargin={8} />
                   <Tooltip cursor={{ fill: "hsl(var(--accent) / 0.1)" }} content={<ChartTooltipContent hideLabel />} />
                   <Legend />
@@ -43,7 +82,7 @@ export default function DataVisualization() {
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle>Current Pollutant Levels</CardTitle>
-              <CardDescription>Comparison of current pollutant readings.</CardDescription>
+              <CardDescription>Comparison of current pollutant readings (not affected by date range).</CardDescription>
             </CardHeader>
             <CardContent>
                <ChartContainer config={CHART_CONFIG} className="h-[400px] w-full">
@@ -55,7 +94,7 @@ export default function DataVisualization() {
                   <Legend />
                   <Bar dataKey="value" radius={5}>
                      {MOCK_BAR_CHART_DATA.map((entry, index) => (
-                        <svg key={`cell-${index}`} fill={entry.fill} /> // This is a bit of a hack for recharts fill with CSS variables
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
                       ))}
                   </Bar>
                 </BarChart>

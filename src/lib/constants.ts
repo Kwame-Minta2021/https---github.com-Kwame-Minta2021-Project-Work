@@ -1,5 +1,6 @@
 import type { AirQualityData, HistoricalDataPoint } from '@/types';
 import { Thermometer, Wind, Cloud, Factory, FlaskConical, Flame, Layers } from 'lucide-react';
+import { subDays, formatISO, startOfHour, setHours } from 'date-fns';
 
 export const MOCK_AIR_QUALITY_DATA: AirQualityData = {
   co: { id: 'co', name: 'CO (MQ-9)', value: 0.58, unit: 'ppm', icon: Flame, color: "hsl(var(--chart-1))" },
@@ -11,15 +12,31 @@ export const MOCK_AIR_QUALITY_DATA: AirQualityData = {
   timestamp: new Date(),
 };
 
-export const MOCK_HISTORICAL_DATA: HistoricalDataPoint[] = [
-  { time: '00:00', CO: 0.4, VOCs: 0.8, PM25: 5 },
-  { time: '02:00', CO: 0.5, VOCs: 0.9, PM25: 6 },
-  { time: '04:00', CO: 0.58, VOCs: 1.0, PM25: 7 },
-  { time: '06:00', CO: 0.6, VOCs: 1.1, PM25: 8 },
-  { time: '08:00', CO: 0.55, VOCs: 1.05, PM25: 6 },
-  { time: '10:00', CO: 0.5, VOCs: 1.0, PM25: 5 },
-  { time: '12:00', CO: 0.58, VOCs: 1.07, PM25: 3 }, // Corresponds to current mock
-];
+const generateHistoricalData = (): HistoricalDataPoint[] => {
+  const data: HistoricalDataPoint[] = [];
+  const baseDate = new Date(); // Use current date as a base
+
+  for (let dayOffset = 0; dayOffset < 30; dayOffset++) { // Generate data for the last 30 days
+    const currentDateAtMidnight = startOfHour(subDays(baseDate, dayOffset)); // Day at 00:00
+    currentDateAtMidnight.setHours(0,0,0,0);
+
+
+    for (let hour = 0; hour < 24; hour++) { // Hourly data for that day
+      const timestamp = setHours(currentDateAtMidnight, hour);
+      
+      data.push({
+        timestamp: formatISO(timestamp),
+        CO: Number((0.4 + Math.random() * 0.3).toFixed(2)),
+        VOCs: Number((0.8 + Math.random() * 0.4).toFixed(2)),
+        PM25: Number((2 + Math.random() * 6).toFixed(0)),
+      });
+    }
+  }
+  return data.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()); // Ensure chronological order
+};
+
+export const MOCK_HISTORICAL_DATA: HistoricalDataPoint[] = generateHistoricalData();
+
 
 export const MOCK_BAR_CHART_DATA = [
   { name: 'CO', value: MOCK_AIR_QUALITY_DATA.co.value, fill: "var(--color-co)" },
@@ -37,7 +54,8 @@ export const CHART_CONFIG = {
   pm1_0: { label: "PM1.0 (µg/m³)", color: MOCK_AIR_QUALITY_DATA.pm1_0.color },
   pm2_5: { label: "PM2.5 (µg/m³)", color: MOCK_AIR_QUALITY_DATA.pm2_5.color },
   pm10: { label: "PM10 (µg/m³)", color: MOCK_AIR_QUALITY_DATA.pm10.color },
-  PM25: { label: "PM2.5 (µg/m³)", color: MOCK_AIR_QUALITY_DATA.pm2_5.color }, // For historical key
-  CO_hist: { label: "CO (ppm)", color: MOCK_AIR_QUALITY_DATA.co.color }, // For historical key, to avoid conflict if 'CO' is already in config from another source
-  VOCs_hist: { label: "VOCs (ppm)", color: MOCK_AIR_QUALITY_DATA.vocs.color }, // For historical key
+  // Keys for historical data in line chart
+  CO: { label: "CO (ppm)", color: MOCK_AIR_QUALITY_DATA.co.color }, // Matches dataKey "CO"
+  VOCs: { label: "VOCs (ppm)", color: MOCK_AIR_QUALITY_DATA.vocs.color }, // Matches dataKey "VOCs"
+  PM25: { label: "PM2.5 (µg/m³)", color: MOCK_AIR_QUALITY_DATA.pm2_5.color }, // Matches dataKey "PM25"
 } as const;

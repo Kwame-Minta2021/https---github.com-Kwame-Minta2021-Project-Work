@@ -21,6 +21,6 @@ export interface AirQualityData {
 }
 
 export interface HistoricalDataPoint {
-  time: string; // Could be Date object or formatted string
+  timestamp: string; // ISO date string e.g. "2024-07-15T10:00:00.000Z"
   [pollutant: string]: number | string; // e.g., PM25: 10, CO: 0.5
 }
