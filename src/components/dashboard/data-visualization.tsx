@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,7 +7,7 @@ import { BarChart, LineChart as RechartsLineChart, ResponsiveContainer, XAxis, Y
 import { MOCK_BAR_CHART_DATA, CHART_CONFIG } from '@/lib/constants';
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 import type { HistoricalDataPoint } from '@/types';
-import { parseISO, format, differenceInDays } from 'date-fns';
+import { parseISO, format, differenceInDays, isValid } from 'date-fns';
 
 interface DataVisualizationProps {
   historicalData: HistoricalDataPoint[];
@@ -14,9 +15,15 @@ interface DataVisualizationProps {
 
 export default function DataVisualization({ historicalData }: DataVisualizationProps) {
   const xAxisTickFormatter = (isoTimestamp: string) => {
-    if (!historicalData || historicalData.length === 0) return isoTimestamp;
+    if (!historicalData || historicalData.length === 0) {
+      // If no historical data, try to format the tick as time, or return as is.
+      try {
+        const parsedTick = parseISO(isoTimestamp);
+        if (isValid(parsedTick)) return format(parsedTick, 'HH:mm');
+      } catch (e) { /* ignore */ }
+      return isoTimestamp;
+    }
     
-    // Ensure valid date objects before calling differenceInDays
     let firstDate: Date | null = null;
     let lastDate: Date | null = null;
 
@@ -24,21 +31,36 @@ export default function DataVisualization({ historicalData }: DataVisualizationP
       firstDate = parseISO(historicalData[0].timestamp);
       lastDate = parseISO(historicalData[historicalData.length - 1].timestamp);
     } catch (e) {
-      // console.error("Error parsing date for tick formatter:", e);
-      return format(parseISO(isoTimestamp), 'HH:mm'); // Fallback to time if parsing fails
+      // Fallback if historicalData timestamps are problematic
+      try {
+        const parsedTick = parseISO(isoTimestamp);
+        if (isValid(parsedTick)) return format(parsedTick, 'HH:mm');
+      } catch (parseErr) { /* ignore */ }
+      return isoTimestamp;
     }
     
-    // Check if dates are valid after parsing
-    if (!(firstDate instanceof Date && !isNaN(firstDate.valueOf())) || !(lastDate instanceof Date && !isNaN(lastDate.valueOf()))) {
-      return format(parseISO(isoTimestamp), 'HH:mm'); // Fallback if dates are invalid
+    if (!isValid(firstDate) || !isValid(lastDate)) {
+      // Fallback if parsed first/last dates are invalid
+      try {
+        const parsedTick = parseISO(isoTimestamp);
+        if (isValid(parsedTick)) return format(parsedTick, 'HH:mm');
+      } catch (parseErr) { /* ignore */ }
+      return isoTimestamp;
     }
 
     const dayDiff = differenceInDays(lastDate, firstDate);
 
-    if (dayDiff > 1) {
-      return format(parseISO(isoTimestamp), 'MMM d'); 
+    try {
+      const currentTickDate = parseISO(isoTimestamp);
+      if (!isValid(currentTickDate)) return isoTimestamp; // Fallback for unparsable tick
+
+      if (dayDiff > 1) {
+        return format(currentTickDate, 'MMM d'); 
+      }
+      return format(currentTickDate, 'HH:mm'); 
+    } catch (e) {
+      return isoTimestamp; // Ultimate fallback
     }
-    return format(parseISO(isoTimestamp), 'HH:mm'); 
   };
   
   return (
@@ -70,9 +92,9 @@ export default function DataVisualization({ historicalData }: DataVisualizationP
                   <YAxis tickLine={false} axisLine={false} tickMargin={8} />
                   <Tooltip cursor={{ fill: "hsl(var(--accent) / 0.1)" }} content={<ChartTooltipContent hideLabel />} />
                   <Legend />
-                  <Line type="monotone" dataKey="CO" name="CO (ppm)" stroke="var(--color-co)" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="VOCs" name="VOCs (ppm)" stroke="var(--color-vocs)" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="PM25" name="PM2.5 (µg/m³)" stroke="var(--color-pm2_5)" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="CO" name="CO (ppm)" stroke="var(--color-CO)" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="VOCs" name="VOCs (ppm)" stroke="var(--color-VOCs)" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="PM25" name="PM2.5 (µg/m³)" stroke="var(--color-PM25)" strokeWidth={2} dot={false} />
                 </RechartsLineChart>
               </ChartContainer>
             </CardContent>
