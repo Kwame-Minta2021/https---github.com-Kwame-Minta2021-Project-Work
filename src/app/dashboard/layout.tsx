@@ -16,10 +16,17 @@ import {
 import { Header } from "@/components/layout/header";
 import { SidebarNav } from "@/components/layout/sidebar-nav";
 import { Button } from "@/components/ui/button";
-import { LogOut, Settings } from "lucide-react";
+import { LogOut, Settings, Sun, Moon, Laptop } from "lucide-react";
 import AIChatbot from "@/components/dashboard/ai-chatbot"; 
 import { MOCK_AIR_QUALITY_DATA } from "@/lib/constants";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { useTheme } from "next-themes";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 
 export type PrintHandler = () => void;
@@ -31,6 +38,7 @@ export default function DashboardLayout({
 }) {
   const printRef = React.useRef<PrintHandler | null>(null);
   const [isChatbotOpen, setIsChatbotOpen] = React.useState(false);
+  const { setTheme } = useTheme();
 
   const handlePrint = () => {
     if (printRef.current) {
@@ -62,12 +70,30 @@ export default function DashboardLayout({
         </SidebarContent>
         <SidebarFooter className="p-2">
            <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton tooltip={{children: "Settings", side: "right", align: "center"}}>
-                <Settings />
-                <span>Settings</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <SidebarMenuItem>
+                  <SidebarMenuButton tooltip={{children: "Change Theme", side: "right", align: "center"}}>
+                    <Settings />
+                    <span>Theme</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent side="right" align="start" sideOffset={5} className="w-40 ml-1 mb-1 md:ml-0 md:mb-0">
+                <DropdownMenuItem onClick={() => setTheme("light")}>
+                  <Sun className="mr-2 h-4 w-4" />
+                  <span>Light</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme("dark")}>
+                  <Moon className="mr-2 h-4 w-4" />
+                  <span>Dark</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme("system")}>
+                  <Laptop className="mr-2 h-4 w-4" />
+                  <span>System</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <SidebarMenuItem>
               <SidebarMenuButton tooltip={{children: "Log Out", side: "right", align: "center"}}>
                 <LogOut />
@@ -79,7 +105,6 @@ export default function DashboardLayout({
       </Sidebar>
       <SidebarInset>
         <Header onPrint={handlePrint} onToggleChatbot={toggleChatbot} />
-        {/* Pass printRef down to children if needed, or handle print data gathering here */}
         {React.cloneElement(children as React.ReactElement, { setPrintHandler: (handler: PrintHandler) => printRef.current = handler })}
       </SidebarInset>
 
