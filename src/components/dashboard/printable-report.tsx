@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import type { AirQualityData } from '@/types';
 import type { AnalyzeAirQualityOutput } from '@/ai/flows/analyze-air-quality';
 import { format } from 'date-fns';
@@ -12,6 +12,13 @@ interface PrintableReportProps {
 
 const PrintableReport = React.forwardRef<HTMLDivElement, PrintableReportProps>(
   ({ airQualityData, aiAnalysis }, ref) => {
+    const [generatedOnTimestamp, setGeneratedOnTimestamp] = useState<string | null>(null);
+
+    useEffect(() => {
+      // Set the timestamp only on the client side after hydration
+      setGeneratedOnTimestamp(format(new Date(), 'MMMM dd, yyyy HH:mm:ss'));
+    }, []); // Empty dependency array ensures this runs once on mount (client-side)
+
     const sensorReadings = [
       airQualityData.co,
       airQualityData.vocs,
@@ -25,9 +32,11 @@ const PrintableReport = React.forwardRef<HTMLDivElement, PrintableReportProps>(
       <div ref={ref} className="p-8 font-sans text-sm bg-white text-black">
         <header className="mb-8 text-center">
           <h1 className="text-3xl font-bold text-primary mb-2" style={{ color: '#64B5F6' }}>BreatheEasy Air Quality Report</h1>
-          <p className="text-gray-600">
-            Generated on: {format(new Date(), 'MMMM dd, yyyy HH:mm:ss')}
-          </p>
+          {generatedOnTimestamp && (
+            <p className="text-gray-600">
+              Generated on: {generatedOnTimestamp}
+            </p>
+          )}
           <p className="text-gray-600">
             Readings Timestamp: {format(airQualityData.timestamp, 'MMMM dd, yyyy HH:mm:ss')}
           </p>
