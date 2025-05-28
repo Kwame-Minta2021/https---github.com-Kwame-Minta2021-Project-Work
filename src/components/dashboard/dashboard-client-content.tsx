@@ -14,18 +14,18 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import RealtimeDataGrid from '@/components/dashboard/realtime-data-grid';
 import DataVisualization from '@/components/dashboard/data-visualization';
-import AIAnalyzerSection from '@/components/dashboard/ai-analyzer-section';
+// AIAnalyzerSection is now passed as children
 import PrintableReport from '@/components/dashboard/printable-report';
 import { MOCK_AIR_QUALITY_DATA, MOCK_HISTORICAL_DATA as ALL_MOCK_HISTORICAL_DATA } from '@/lib/constants';
 import type { HistoricalDataPoint } from '@/types';
-import type { AnalyzeAirQualityOutput, AnalyzeAirQualityInput } from '@/ai/flows/analyze-air-quality';
+import type { AnalyzeAirQualityOutput } from '@/ai/flows/analyze-air-quality';
 import type { PrintHandler } from '@/app/dashboard/layout';
 import { cn } from '@/lib/utils';
 
 interface DashboardClientContentProps {
   setPrintHandler?: (handler: PrintHandler) => void;
   aiAnalysisForReport: AnalyzeAirQualityOutput | null;
-  aiInputForAnalyzer: AnalyzeAirQualityInput;
+  children: React.ReactNode; // For AIAnalyzerSection
 }
 
 function AIAnalyzerSkeleton() {
@@ -61,7 +61,7 @@ function AIAnalyzerSkeleton() {
 export default function DashboardClientContent({ 
   setPrintHandler, 
   aiAnalysisForReport,
-  aiInputForAnalyzer 
+  children 
 }: DashboardClientContentProps) {
   const [date, setDate] = React.useState<DateRange | undefined>({
     from: startOfDay(subDays(new Date(), 6)), // Default to last 7 days
@@ -171,7 +171,7 @@ export default function DashboardClientContent({
       <RealtimeDataGrid data={MOCK_AIR_QUALITY_DATA} />
       <DataVisualization historicalData={filteredHistoricalData} />
       <Suspense fallback={<AIAnalyzerSkeleton />}>
-        <AIAnalyzerSection readings={aiInputForAnalyzer} />
+        {children}
       </Suspense>
       
       <div id="printable-report-content-client" style={{ display: 'none' }}>

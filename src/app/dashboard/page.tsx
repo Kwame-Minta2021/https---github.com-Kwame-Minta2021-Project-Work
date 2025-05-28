@@ -1,4 +1,5 @@
 import DashboardClientContent from '@/components/dashboard/dashboard-client-content';
+import AIAnalyzerSection from '@/components/dashboard/ai-analyzer-section';
 import { MOCK_AIR_QUALITY_DATA } from '@/lib/constants';
 import { analyzeAirQuality, type AnalyzeAirQualityOutput, type AnalyzeAirQualityInput } from '@/ai/flows/analyze-air-quality';
 import type { PrintHandler } from './layout'; 
@@ -36,8 +37,9 @@ export default async function DashboardPage({ setPrintHandler }: DashboardPagePr
     <DashboardClientContent 
       setPrintHandler={setPrintHandler}
       aiAnalysisForReport={aiAnalysisForReportData}
-      aiInputForAnalyzer={aiInputForAnalyzerData}
-    />
+    >
+      <AIAnalyzerSection readings={aiInputForAnalyzerData} />
+    </DashboardClientContent>
   );
 }
 
