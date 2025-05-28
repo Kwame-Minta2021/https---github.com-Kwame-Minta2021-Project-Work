@@ -1,4 +1,10 @@
+
 import type { LucideIcon } from 'lucide-react';
+
+export interface SensorReadingThresholds {
+  moderate: number;
+  unhealthy: number;
+}
 
 export interface SensorReading {
   id: string;
@@ -7,7 +13,8 @@ export interface SensorReading {
   unit: string;
   icon?: LucideIcon;
   description?: string;
-  color?: string; // Optional color for charts or UI elements
+  color?: string; // Optional base color for charts or UI elements
+  thresholds?: SensorReadingThresholds; // Thresholds for color coding
 }
 
 export interface AirQualityData {
@@ -23,4 +30,11 @@ export interface AirQualityData {
 export interface HistoricalDataPoint {
   timestamp: string; // ISO date string e.g. "2024-07-15T10:00:00.000Z"
   [pollutant: string]: number | string; // e.g., PM25: 10, CO: 0.5
+}
+
+export interface HeatmapDataPoint {
+  day: string; // e.g., "Mon", "Tue"
+  hour: number; // 0-23
+  value: number; // Pollutant concentration
+  pollutant: string; // e.g., "PM2.5"
 }
