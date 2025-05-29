@@ -1,3 +1,4 @@
+
 {
   "dashboardTitle": "BreatheEasy Dashboard",
   "realTimeAirQuality": "Real-time Air Quality",
@@ -26,7 +27,6 @@
   "changeLanguage": "Change Language",
   "english": "English",
   "french": "Français",
-  "twi": "Twi",
   "sidebarDashboard": "Dashboard",
   "sidebarRealTimeData": "Real-time Data",
   "sidebarVisualizations": "Visualizations",

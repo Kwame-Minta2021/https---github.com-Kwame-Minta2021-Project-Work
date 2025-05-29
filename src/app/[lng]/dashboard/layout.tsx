@@ -156,9 +156,6 @@ export default function DashboardLayout({
                 <DropdownMenuItem onClick={() => changeLanguage('fr')} disabled={currentLng === 'fr'}>
                   {t('french')}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => changeLanguage('tw')} disabled={currentLng === 'tw'}>
-                  {t('twi')}
-                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 

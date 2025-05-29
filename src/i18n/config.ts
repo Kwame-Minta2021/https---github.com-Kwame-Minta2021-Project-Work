@@ -1,6 +1,6 @@
 
 export const fallbackLng = 'en';
-export const languages = [fallbackLng, 'fr', 'tw'];
+export const languages = [fallbackLng, 'fr']; // Removed 'tw'
 export const defaultNS = 'common';
 export const cookieName = 'i18next';
 

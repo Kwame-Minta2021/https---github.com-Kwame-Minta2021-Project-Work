@@ -1,3 +1,4 @@
+
 {
   "dashboardTitle": "Tableau de Bord BreatheEasy",
   "realTimeAirQuality": "Qualité de l'air en temps réel",
@@ -26,7 +27,6 @@
   "changeLanguage": "Changer de langue",
   "english": "Anglais",
   "french": "Français",
-  "twi": "Twi",
   "sidebarDashboard": "Tableau de bord",
   "sidebarRealTimeData": "Données en temps réel",
   "sidebarVisualizations": "Visualisations",
