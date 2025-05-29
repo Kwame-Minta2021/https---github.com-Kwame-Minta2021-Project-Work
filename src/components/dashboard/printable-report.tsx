@@ -19,6 +19,7 @@ const PrintableReport = React.forwardRef<HTMLDivElement, PrintableReportProps>(
     const [generatedOnTimestamp, setGeneratedOnTimestamp] = useState<string | null>(null);
 
     useEffect(() => {
+      // This ensures new Date() is only called on the client after hydration
       setGeneratedOnTimestamp(format(new Date(), 'MMMM dd, yyyy HH:mm:ss'));
     }, []); 
 
@@ -62,7 +63,7 @@ const PrintableReport = React.forwardRef<HTMLDivElement, PrintableReportProps>(
             <tbody>
               {sensorReadings.map((reading) => (
                 <tr key={reading.id}>
-                  <td className="border p-2">{reading.name}</td> {/* Sensor names are from MOCK_AIR_QUALITY_DATA, could be made translatable too if needed */}
+                  <td className="border p-2">{reading.name}</td>
                   <td className="border p-2 text-right">{reading.value.toFixed(2)}</td>
                   <td className="border p-2">{reading.unit}</td>
                 </tr>
