@@ -1,6 +1,6 @@
 
 import type { Metadata } from 'next';
-import { Geist_Sans, Geist_Mono } from 'next/font/google'; // Corrected import
+import { Inter, Roboto_Mono } from 'next/font/google'; // Changed font imports
 import '../globals.css'; // Adjusted path
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/context/theme-provider";
@@ -8,24 +8,19 @@ import { dir } from 'i18next';
 import { languages } from '@/i18n/config';
 import { getTranslations } from '@/i18n'; // Use your getTranslations
 
-const geistSans = Geist_Sans({ // Corrected instantiation
-  variable: '--font-geist-sans',
+const inter = Inter({ // Changed font instantiation
+  variable: '--font-inter', // Changed CSS variable name
   subsets: ['latin'],
 });
 
-const geistMono = Geist_Mono({ // Corrected instantiation
-  variable: '--font-geist-mono',
+const robotoMono = Roboto_Mono({ // Changed font instantiation
+  variable: '--font-roboto-mono', // Changed CSS variable name
   subsets: ['latin'],
 });
 
 export async function generateStaticParams() {
   return languages.map((lng) => ({ lng }));
 }
-
-// export const metadata: Metadata = { // Metadata can be dynamic based on language
-// title: 'BreatheEasy Dashboard',
-// description: 'Air Quality Monitoring Dashboard',
-// };
 
 export async function generateMetadata({ params: { lng } }: { params: { lng: string } }): Promise<Metadata> {
   const { t } = await getTranslations(lng, 'common');
@@ -46,7 +41,7 @@ export default function LocaleLayout({ // Renamed from RootLayout to avoid confu
   return (
     <html lang={lng} dir={dir(lng)} suppressHydrationWarning>
       <body 
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`} 
+        className={`${inter.variable} ${robotoMono.variable} antialiased`} // Used updated font variables
         suppressHydrationWarning={true}
       >
         <ThemeProvider
