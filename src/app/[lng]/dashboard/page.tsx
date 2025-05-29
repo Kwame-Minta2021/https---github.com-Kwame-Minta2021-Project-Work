@@ -35,14 +35,14 @@ async function fetchAIAnalysisForReport(): Promise<AnalyzeAirQualityOutput | nul
 export default async function DashboardPage({ setPrintHandler, params: { lng } }: DashboardPageProps) {
   const aiAnalysisForReportData = await fetchAIAnalysisForReport();
   const aiInputForAnalyzerData = getAIInput(MOCK_AIR_QUALITY_DATA);
-  const { t } = await getTranslations(lng, 'common');
+  // const { t } = await getTranslations(lng, 'common'); // t function will be obtained in Client Component
 
   return (
     <DashboardClientContent 
       setPrintHandler={setPrintHandler}
       aiAnalysisForReport={aiAnalysisForReportData}
       lng={lng}
-      t={t} // Pass t function
+      // t={t} // Do not pass t function from Server Component
     >
       <AIAnalyzerSection readings={aiInputForAnalyzerData} lng={lng} />
     </DashboardClientContent>

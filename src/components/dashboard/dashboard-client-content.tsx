@@ -7,7 +7,7 @@ import { Suspense } from 'react';
 import { DateRange } from 'react-day-picker';
 import { subDays, format, parseISO, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -28,7 +28,7 @@ interface DashboardClientContentProps {
   aiAnalysisForReport: AnalyzeAirQualityOutput | null;
   children: React.ReactNode; // For AIAnalyzerSection
   lng: string;
-  t: (key: string) => string; // Pass t function for any direct use needed
+  // t: (key: string) => string; // Remove t from props
 }
 
 function AIAnalyzerSkeleton({ t }: { t: (key: string) => string }) {
@@ -66,9 +66,9 @@ export default function DashboardClientContent({
   aiAnalysisForReport,
   children,
   lng, // Receive lng
-  t // Receive t function
+  // t // t is no longer received as a prop
 }: DashboardClientContentProps) {
-  // const { t } = useTranslation(); // Can also use this if preferred
+  const { t } = useTranslation(); // Get t function using the hook
   
   const [date, setDate] = React.useState<DateRange | undefined>({
     from: startOfDay(subDays(new Date(), 6)), 
