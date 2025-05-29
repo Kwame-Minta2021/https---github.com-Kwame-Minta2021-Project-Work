@@ -1,5 +1,4 @@
-
-// This is now a minimal root layout, as [lng]/layout.tsx will be the main one.
+// src/app/layout.tsx
 import './globals.css'; // Keep global styles accessible
 
 export default function RootLayout({
@@ -7,9 +6,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <html lang="en" suppressHydrationWarning>
-      <body suppressHydrationWarning={true}>{children}</body>
-    </html>
-  );
+  // This RootLayout delegates the <html> and <body> structure
+  // to the [lng]/layout.tsx when using internationalized routing.
+  // It should not render <html> or <body> tags itself.
+  return <>{children}</>;
 }
