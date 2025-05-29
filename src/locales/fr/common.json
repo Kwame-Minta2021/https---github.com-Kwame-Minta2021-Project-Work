@@ -37,6 +37,15 @@
   "chatbotInitialGreeting": "Bonjour ! Comment puis-je vous aider avec vos questions sur la qualité de l'air aujourd'hui ?",
   "pickDateRange": "Choisir une plage de dates",
   "errorAnalyzingAirQuality": "Erreur lors de l'analyse de la qualité de l'air",
-  "errorTryAgain": "Veuillez réessayer plus tard ou vérifier les données des capteurs."
+  "errorTryAgain": "Veuillez réessayer plus tard ou vérifier les données des capteurs.",
+  "reportTitle": "Rapport de Qualité de l'Air BreatheEasy",
+  "reportGeneratedOn": "Généré le",
+  "reportReadingsTimestamp": "Horodatage des lectures",
+  "reportSensorReadingsTitle": "Relevés des capteurs",
+  "reportPollutantHeader": "Polluant",
+  "reportValueHeader": "Valeur",
+  "reportUnitHeader": "Unité",
+  "reportNoHealthImpactData": "Aucune analyse d'impact sur la santé disponible.",
+  "reportNoRecommendationsData": "Aucune recommandation disponible.",
+  "reportFooterText": "Tableau de Bord BreatheEasy - Votre partenaire pour des environnements plus sains."
 }
-

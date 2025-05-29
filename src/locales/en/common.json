@@ -37,6 +37,15 @@
   "chatbotInitialGreeting": "Hello! How can I help you with your air quality questions today?",
   "pickDateRange": "Pick a date range",
   "errorAnalyzingAirQuality": "Error Analyzing Air Quality",
-  "errorTryAgain": "Please try again later or check the sensor data."
+  "errorTryAgain": "Please try again later or check the sensor data.",
+  "reportTitle": "BreatheEasy Air Quality Report",
+  "reportGeneratedOn": "Generated on",
+  "reportReadingsTimestamp": "Readings Timestamp",
+  "reportSensorReadingsTitle": "Sensor Readings",
+  "reportPollutantHeader": "Pollutant",
+  "reportValueHeader": "Value",
+  "reportUnitHeader": "Unit",
+  "reportNoHealthImpactData": "No health impact analysis available.",
+  "reportNoRecommendationsData": "No recommendations available.",
+  "reportFooterText": "BreatheEasy Dashboard - Your partner in healthier environments."
 }
-
