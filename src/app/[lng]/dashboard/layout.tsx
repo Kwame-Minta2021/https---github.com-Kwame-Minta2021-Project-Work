@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { useParams, useRouter, usePathname } from "next/navigation"; // Import useRouter and usePathname
+import { useParams, useRouter, usePathname } from "next/navigation"; // useParams is already here
 import { useTranslation } from 'react-i18next';
 import i18next from 'i18next';
 import resourcesToBackend from 'i18next-resources-to-backend';
@@ -52,14 +52,17 @@ export type PrintHandler = () => void;
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
-  params: { lng: string };
+  // params: { lng: string }; // Removed params from props
 }
 
 
 export default function DashboardLayout({
   children,
-  params: { lng: currentLng } // Get lng from params
+  // params: { lng: currentLng } // Removed params from function signature
 }: DashboardLayoutProps) {
+  const params = useParams(); // Use the hook to get route parameters
+  const currentLng = params.lng as string; // Extract lng from the hook's result
+
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const pathname = usePathname();
