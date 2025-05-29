@@ -105,17 +105,29 @@ export default function DashboardClientContent({
       const handlePrintRequest = () => {
         const printWindow = window.open('', '_blank');
         if (printWindow) {
+          const reportElement = document.getElementById('printable-report-content-client');
+          if (!reportElement) {
+            console.error('Printable report content element not found.');
+            if (printWindow) printWindow.close();
+            return;
+          }
+
+          // Store original display style and make the element visible
+          const originalDisplay = reportElement.style.display;
+ reportElement.style.display = 'block';
+
           printWindow.document.write('<html><head><title>BreatheEasy Report</title>');
           printWindow.document.write('<style>body { font-family: sans-serif; margin: 20px; } table { width: 100%; border-collapse: collapse; } th, td { border: 1px solid #ddd; padding: 8px; text-align: left; } h1,h2,h3 { color: #64B5F6; } .whitespace-pre-line { white-space: pre-line; } </style>');
           printWindow.document.write('</head><body>');
           
-          const reportElement = document.getElementById('printable-report-content-client');
-          if (reportElement) {
-              printWindow.document.write(reportElement.innerHTML);
-          } else {
-              printWindow.document.write('<h1>Report Content Not Found</h1>');
-          }
+          printWindow.document.write(reportElement.innerHTML);
 
+          // Restore original display style after printing
+          printWindow.onafterprint = () => {
+            reportElement.style.display = originalDisplay;
+            if (printWindow) printWindow.close(); // Close window after printing
+          };
+          
           printWindow.document.write('</body></html>');
           printWindow.document.close();
           printWindow.print();
@@ -127,8 +139,8 @@ export default function DashboardClientContent({
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-6 lg:p-8">
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
-        <h2 className="text-2xl font-semibold tracking-tight">Air Quality Overview</h2>
+      <div className="flex flex-col sm:flex-row justify-end items-center gap-4 mb-6">
+        {/* <h2 className="text-2xl font-semibold tracking-tight">Air Quality Overview</h2> Removed */}
         <Popover>
           <PopoverTrigger asChild>
             <Button
