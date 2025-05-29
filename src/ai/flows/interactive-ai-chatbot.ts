@@ -20,11 +20,12 @@ const AskChatbotInputSchema = z.object({
   pm1Level: z.number().describe('The current level of Particulate Matter 1.0 (PM1.0) in ug/m3.'),
   pm25Level: z.number().describe('The current level of Particulate Matter 2.5 (PM2.5) in ug/m3.'),
   pm10Level: z.number().describe('The current level of Particulate Matter 10 (PM10) in ug/m3.'),
+  language: z.string().describe('The language for the response (e.g., "en", "fr").'),
 });
 export type AskChatbotInput = z.infer<typeof AskChatbotInputSchema>;
 
 const AskChatbotOutputSchema = z.object({
-  response: z.string().describe('The chatbot response to the user question.'),
+  response: z.string().describe('The chatbot response to the user question. This response should be in the language specified in the input.'),
 });
 export type AskChatbotOutput = z.infer<typeof AskChatbotOutputSchema>;
 
@@ -45,6 +46,8 @@ Your primary function is to answer user questions about:
 - Historical data trends if the user refers to data available on the dashboard.
 - How the AI analyzer (simulated RL model) on the dashboard works.
 
+IMPORTANT: Respond ENTIRELY in the language specified by the '{{language}}' parameter. For example, if '{{language}}' is 'fr', your entire response must be in French.
+
 You have access to the following real-time sensor readings from the dashboard:
 - CO (MQ-9): {{{coLevel}}} ppm
 - VOCs (MQ-135): {{{vocLevel}}} ppm
@@ -52,20 +55,21 @@ You have access to the following real-time sensor readings from the dashboard:
 - PM1.0: {{{pm1Level}}} ug/m3
 - PM2.5: {{{pm25Level}}} ug/m3
 - PM10: {{{pm10Level}}} ug/m3
+Language for response: {{language}}
 
 IMPORTANT SCOPE LIMITATIONS:
 - You MUST strictly adhere to questions related to air quality, the BreatheEasy dashboard's data, and its features.
-- If the user asks a question unrelated to these topics (e.g., general knowledge, personal advice not related to air quality, math problems, coding help, current events, etc.), you MUST politely decline to answer.
-- Example responses for out-of-scope questions:
+- If the user asks a question unrelated to these topics (e.g., general knowledge, personal advice not related to air quality, math problems, coding help, current events, etc.), you MUST politely decline to answer in the specified '{{language}}'.
+- Example responses for out-of-scope questions (adapt to '{{language}}'):
     - "I can only answer questions about air quality and the BreatheEasy dashboard. Could you ask something related to that?"
     - "My apologies, but my expertise is limited to air quality information relevant to this dashboard. How can I help you with that?"
     - "That question is outside of my current capabilities. I'm here to help with your air quality queries!"
 
 IMPORTANT RESPONSE FORMATTING:
-- Provide your response as plain text.
+- Provide your response as plain text IN THE SPECIFIED LANGUAGE ({{language}}).
 - Do NOT use any markdown formatting. Specifically, do not use double asterisks (**) for bolding.
 
-Answer the following user question accurately, helpfully, and in a user-friendly manner, using the sensor data to inform your answer where relevant.
+Answer the following user question accurately, helpfully, and in a user-friendly manner, using the sensor data to inform your answer where relevant. Ensure the response is in {{language}}.
 
 User Question: {{{question}}}
 `,

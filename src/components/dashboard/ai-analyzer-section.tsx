@@ -3,23 +3,30 @@ import { analyzeAirQuality, type AnalyzeAirQualityInput, type AnalyzeAirQualityO
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { AlertCircle, CheckCircle2, Brain } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getTranslations } from '@/i18n'; // For server component translation
+import { getTranslations } from '@/i18n'; 
 
 interface AIAnalyzerSectionProps {
-  readings: AnalyzeAirQualityInput;
-  lng: string; // Add lng prop
+  readings: Omit<AnalyzeAirQualityInput, 'language'>; // Receives raw readings without language
+  lng: string; 
 }
 
 export default async function AIAnalyzerSection({ readings, lng }: AIAnalyzerSectionProps) {
-  const { t } = await getTranslations(lng, 'common'); // Initialize t function
+  const { t } = await getTranslations(lng, 'common'); 
   let analysis: AnalyzeAirQualityOutput | null = null;
   let error = null;
+
+  const aiInputWithLanguage: AnalyzeAirQualityInput = {
+    ...readings,
+    language: lng,
+  };
+
   try {
-    analysis = await analyzeAirQuality(readings);
+    analysis = await analyzeAirQuality(aiInputWithLanguage);
   } catch (e) {
     console.error("AI Analyzer Error:", e);
     error = e instanceof Error ? e.message : "An unknown error occurred during AI analysis.";
-    analysis = { effectOnHumanHealth: "", bestActionToReducePresence: "" };
+    // Provide default empty strings for analysis in case of error to avoid undefined access
+    analysis = { effectOnHumanHealth: "", bestActionToReducePresence: "" }; 
   }
 
   if (error) {
@@ -30,12 +37,12 @@ export default async function AIAnalyzerSection({ readings, lng }: AIAnalyzerSec
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-destructive">
               <AlertCircle className="h-6 w-6" />
-              Error Analyzing Air Quality {/* This error message could also be translated */}
+              {t('errorAnalyzingAirQuality')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-destructive-foreground">{error}</p>
-            <p className="text-sm text-muted-foreground mt-2">Please try again later or check the sensor data.</p>
+            <p className="text-sm text-muted-foreground mt-2">{t('errorTryAgain')}</p>
           </CardContent>
         </Card>
       </section>
@@ -110,3 +117,4 @@ export default async function AIAnalyzerSection({ readings, lng }: AIAnalyzerSec
     </section>
   );
 }
+

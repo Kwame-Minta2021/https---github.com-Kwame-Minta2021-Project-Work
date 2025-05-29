@@ -6,7 +6,7 @@ import { askChatbot, type AskChatbotInput } from '@/ai/flows/interactive-ai-chat
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"; // Removed AvatarImage
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"; 
 import { Send, BotIcon, UserIcon, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTranslation } from 'react-i18next';
@@ -18,12 +18,12 @@ interface Message {
 }
 
 interface AIChatbotProps {
-  currentReadings: Omit<AskChatbotInput, 'question'>;
-  lng: string; // Add lng prop
+  currentReadings: Omit<AskChatbotInput, 'question' | 'language'>;
+  lng: string; 
 }
 
 export default function AIChatbot({ currentReadings, lng }: AIChatbotProps) {
-  const { t } = useTranslation(); // Use the hook
+  const { t } = useTranslation(); 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -43,11 +43,10 @@ export default function AIChatbot({ currentReadings, lng }: AIChatbotProps) {
   }, [messages]);
   
   useEffect(() => {
-    // Initial greeting from the bot - this could also be translated if needed from a common key
     setMessages([
-      { id: Date.now().toString(), text: "Hello! How can I help you with your air quality questions today?", sender: 'bot' }
+      { id: Date.now().toString(), text: t('chatbotInitialGreeting'), sender: 'bot' }
     ]);
-  }, []);
+  }, [t]); // Add t to dependency array for initial greeting translation
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -63,15 +62,14 @@ export default function AIChatbot({ currentReadings, lng }: AIChatbotProps) {
       const chatbotInput: AskChatbotInput = {
         ...currentReadings,
         question: input,
+        language: lng, // Pass the current language
       };
-      // Note: askChatbot itself is not language-aware in this setup.
-      // The *prompt* to the LLM would need to be adjusted for full AI response localization.
       const response = await askChatbot(chatbotInput);
       const botMessage: Message = { id: (Date.now() + 1).toString(), text: response.response, sender: 'bot' };
       setMessages(prev => [...prev, botMessage]);
     } catch (error) {
       console.error("Chatbot error:", error);
-      const errorMessage: Message = { id: (Date.now() + 1).toString(), text: "Sorry, I encountered an error. Please try again.", sender: 'bot' };
+      const errorMessage: Message = { id: (Date.now() + 1).toString(), text: "Sorry, I encountered an error. Please try again.", sender: 'bot' }; // This error message could also be translated
       setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
@@ -139,3 +137,4 @@ export default function AIChatbot({ currentReadings, lng }: AIChatbotProps) {
     </div>
   );
 }
+

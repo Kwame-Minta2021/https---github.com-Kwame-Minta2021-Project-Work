@@ -34,5 +34,9 @@
   "chatbotSheetTitle": "AI Chatbot",
   "chatbotSheetDescription": "Ask questions about air quality, sensor readings, and health impacts.",
   "chatbotInputPlaceholder": "Ask about air quality...",
-  "pickDateRange": "Pick a date range"
+  "chatbotInitialGreeting": "Hello! How can I help you with your air quality questions today?",
+  "pickDateRange": "Pick a date range",
+  "errorAnalyzingAirQuality": "Error Analyzing Air Quality",
+  "errorTryAgain": "Please try again later or check the sensor data."
 }
+

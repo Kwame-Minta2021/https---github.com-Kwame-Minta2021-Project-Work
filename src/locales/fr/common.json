@@ -34,5 +34,9 @@
   "chatbotSheetTitle": "Chatbot IA",
   "chatbotSheetDescription": "Posez des questions sur la qualité de l'air, les relevés des capteurs et les impacts sur la santé.",
   "chatbotInputPlaceholder": "Posez une question sur la qualité de l'air...",
-  "pickDateRange": "Choisir une plage de dates"
+  "chatbotInitialGreeting": "Bonjour ! Comment puis-je vous aider avec vos questions sur la qualité de l'air aujourd'hui ?",
+  "pickDateRange": "Choisir une plage de dates",
+  "errorAnalyzingAirQuality": "Erreur lors de l'analyse de la qualité de l'air",
+  "errorTryAgain": "Veuillez réessayer plus tard ou vérifier les données des capteurs."
 }
+
