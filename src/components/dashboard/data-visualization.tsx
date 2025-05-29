@@ -10,11 +10,10 @@ import type { HistoricalDataPoint } from '@/types';
 import { parseISO, format, differenceInDays, isValid } from 'date-fns';
 import React from "react";
 import { Info } from "lucide-react";
-import { useTranslation } from 'react-i18next'; // Import useTranslation
+import { useTranslation } from 'react-i18next';
 
 interface DataVisualizationProps {
   historicalData: HistoricalDataPoint[];
-  // lng: string; // No longer needed
 }
 
 interface GuidelineInfoProps {
@@ -40,7 +39,7 @@ const GuidelineItem: React.FC<GuidelineInfoProps> = ({ pollutant, guidelines, ge
 
 
 export default function DataVisualization({ historicalData }: DataVisualizationProps) {
-  const { t } = useTranslation(); // Use the hook
+  const { t } = useTranslation(); 
   
   const xAxisTickFormatter = (isoTimestamp: string) => {
     if (!historicalData || historicalData.length === 0) {
@@ -160,57 +159,56 @@ export default function DataVisualization({ historicalData }: DataVisualizationP
             </CardHeader>
             <CardContent className="space-y-4">
               <GuidelineItem
-                pollutant="Particulate Matter (PM2.5)"
+                pollutant={t('guidelinePM25Title')}
                 guidelines={[
-                  { period: "Annual mean", value: "5 µg/m³" },
-                  { period: "24-hour mean", value: "15 µg/m³" }
+                  { period: t('guidelineAnnualMean'), value: t('guidelinePM25AnnualValue') },
+                  { period: t('guideline24HourMean'), value: t('guidelinePM25_24hValue') }
                 ]}
               />
               <GuidelineItem
-                pollutant="Particulate Matter (PM10)"
+                pollutant={t('guidelinePM10Title')}
                 guidelines={[
-                  { period: "Annual mean", value: "15 µg/m³" },
-                  { period: "24-hour mean", value: "45 µg/m³" }
+                  { period: t('guidelineAnnualMean'), value: t('guidelinePM10AnnualValue') },
+                  { period: t('guideline24HourMean'), value: t('guidelinePM10_24hValue') }
                 ]}
               />
               <GuidelineItem
-                pollutant="Carbon Monoxide (CO)"
+                pollutant={t('guidelineCOTitle')}
                 guidelines={[
-                  { period: "8-hour mean", value: "4 mg/m³ (≈ 3.5 ppm)" },
-                  { period: "1-hour mean", value: "30 mg/m³ (≈ 26 ppm)" , notes: "Not to be exceeded more than once per day"}
+                  { period: t('guideline8HourMean'), value: t('guidelineCO_8hValue'), notes: t('guidelineCOMgNote') },
+                  { period: t('guideline1HourMean'), value: t('guidelineCO_1hValue') , notes: t('guidelineCONotExceeded') }
                 ]}
-                generalNote="ppm conversion approximate."
+                generalNote={t('guidelineCOConversionNote')}
               />
               <GuidelineItem
-                pollutant="Volatile Organic Compounds (VOCs)"
+                pollutant={t('guidelineVOCsTitle')}
                 guidelines={[]}
-                generalNote="WHO guidelines for VOCs are specific to individual compounds (e.g., benzene, formaldehyde). As a general principle, VOC levels should be kept as low as practically achievable. Ensure good ventilation to reduce indoor VOC concentrations."
+                generalNote={t('guidelineVOCsGeneralNote')}
               />
                <div>
-                <h4 className="font-semibold text-md mb-2 text-primary">Ozone (O₃) - For Reference</h4>
+                <h4 className="font-semibold text-md mb-2 text-primary">{t('guidelineOzoneRefTitle')}</h4>
                 <ul className="list-disc list-inside space-y-1 text-sm text-foreground/90">
-                    <li><strong>8-hour mean (peak season):</strong> 100 µg/m³</li>
+                    <li><strong>{t('guideline8HourMeanPeakSeason')}:</strong> {t('guidelineOzoneValue')}</li>
                 </ul>
-                <p className="text-xs text-muted-foreground mt-1">Note: Ozone is not directly measured by the current dashboard sensors but is a key pollutant.</p>
+                <p className="text-xs text-muted-foreground mt-1">{t('guidelineOzoneNote')}</p>
               </div>
               <div>
-                <h4 className="font-semibold text-md mb-2 text-primary">Nitrogen Dioxide (NO₂) - For Reference</h4>
+                <h4 className="font-semibold text-md mb-2 text-primary">{t('guidelineNO2RefTitle')}</h4>
                  <ul className="list-disc list-inside space-y-1 text-sm text-foreground/90">
-                    <li><strong>Annual mean:</strong> 10 µg/m³</li>
-                    <li><strong>24-hour mean:</strong> 25 µg/m³</li>
+                    <li><strong>{t('guidelineAnnualMean')}:</strong> {t('guidelineNO2AnnualValue')}</li>
+                    <li><strong>{t('guideline24HourMean')}:</strong> {t('guidelineNO2_24hValue')}</li>
                 </ul>
-                 <p className="text-xs text-muted-foreground mt-1">Note: NO₂ is not directly measured by the current dashboard sensors but is a key pollutant.</p>
+                 <p className="text-xs text-muted-foreground mt-1">{t('guidelineNO2Note')}</p>
               </div>
                <div>
-                <h4 className="font-semibold text-md mb-2 text-primary">Sulfur Dioxide (SO₂) - For Reference</h4>
+                <h4 className="font-semibold text-md mb-2 text-primary">{t('guidelineSO2RefTitle')}</h4>
                  <ul className="list-disc list-inside space-y-1 text-sm text-foreground/90">
-                    <li><strong>24-hour mean:</strong> 40 µg/m³</li>
+                    <li><strong>{t('guideline24HourMean')}:</strong> {t('guidelineSO2_24hValue')}</li>
                 </ul>
-                 <p className="text-xs text-muted-foreground mt-1">Note: SO₂ is not directly measured by the current dashboard sensors but is a key pollutant.</p>
+                 <p className="text-xs text-muted-foreground mt-1">{t('guidelineSO2Note')}</p>
               </div>
               <p className="text-xs text-muted-foreground pt-4 border-t mt-4">
-                These are globally recommended guideline levels. National or local standards may vary.
-                Always consult local authorities for specific air quality regulations and health advice.
+                {t('guidelineDisclaimer')}
               </p>
             </CardContent>
           </Card>
@@ -219,3 +217,4 @@ export default function DataVisualization({ historicalData }: DataVisualizationP
     </section>
   );
 }
+
