@@ -1,3 +1,4 @@
+
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
@@ -18,6 +19,10 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  // i18n: { // next-i18next handles this differently, often not needed here for App Router
+  //   locales: ['en', 'fr', 'tw'],
+  //   defaultLocale: 'en',
+  // },
 };
 
 export default nextConfig;

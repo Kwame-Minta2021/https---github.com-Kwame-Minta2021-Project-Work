@@ -1,3 +1,4 @@
+
 // src/components/dashboard/dashboard-client-content.tsx
 'use client';
 
@@ -6,6 +7,7 @@ import { Suspense } from 'react';
 import { DateRange } from 'react-day-picker';
 import { subDays, format, parseISO, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -14,40 +16,41 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import RealtimeDataGrid from '@/components/dashboard/realtime-data-grid';
 import DataVisualization from '@/components/dashboard/data-visualization';
-// AIAnalyzerSection is now passed as children
 import PrintableReport from '@/components/dashboard/printable-report';
 import { MOCK_AIR_QUALITY_DATA, MOCK_HISTORICAL_DATA as ALL_MOCK_HISTORICAL_DATA } from '@/lib/constants';
 import type { HistoricalDataPoint } from '@/types';
 import type { AnalyzeAirQualityOutput } from '@/ai/flows/analyze-air-quality';
-import type { PrintHandler } from '@/app/dashboard/layout';
+import type { PrintHandler } from '@/app/[lng]/dashboard/layout'; // Adjusted path
 import { cn } from '@/lib/utils';
 
 interface DashboardClientContentProps {
   setPrintHandler?: (handler: PrintHandler) => void;
   aiAnalysisForReport: AnalyzeAirQualityOutput | null;
   children: React.ReactNode; // For AIAnalyzerSection
+  lng: string;
+  t: (key: string) => string; // Pass t function for any direct use needed
 }
 
-function AIAnalyzerSkeleton() {
+function AIAnalyzerSkeleton({ t }: { t: (key: string) => string }) {
   return (
     <section id="analyzer-skeleton" className="mb-8 scroll-mt-20">
-      <h2 className="text-2xl font-semibold tracking-tight mb-4">AI Analyzer</h2>
+      <h2 className="text-2xl font-semibold tracking-tight mb-4">{t('aiAnalyzer')}</h2>
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle>Health Impact & Recommendations</CardTitle>
+          <CardTitle>{t('rlModelAnalysis')}</CardTitle>
           <CardDescription>
-            AI-powered insights based on current air quality readings.
+            {t('rlModelAnalysisDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
-            <h3 className="font-semibold text-lg mb-2">Potential Health Impact</h3>
+            <h3 className="font-semibold text-lg mb-2">{t('effectOnHumanHealth')}</h3>
             <Skeleton className="h-4 w-3/4 mb-2" />
             <Skeleton className="h-4 w-1/2" />
           </div>
           <hr className="my-4" />
           <div>
-            <h3 className="font-semibold text-lg mb-2">Recommended Actions</h3>
+            <h3 className="font-semibold text-lg mb-2">{t('bestActionToReducePresence')}</h3>
             <Skeleton className="h-4 w-full mb-2" />
             <Skeleton className="h-4 w-5/6 mb-2" />
             <Skeleton className="h-4 w-3/4" />
@@ -61,10 +64,14 @@ function AIAnalyzerSkeleton() {
 export default function DashboardClientContent({ 
   setPrintHandler, 
   aiAnalysisForReport,
-  children 
+  children,
+  lng, // Receive lng
+  t // Receive t function
 }: DashboardClientContentProps) {
+  // const { t } = useTranslation(); // Can also use this if preferred
+  
   const [date, setDate] = React.useState<DateRange | undefined>({
-    from: startOfDay(subDays(new Date(), 6)), // Default to last 7 days
+    from: startOfDay(subDays(new Date(), 6)), 
     to: endOfDay(new Date()),
   });
 
@@ -80,12 +87,10 @@ export default function DashboardClientContent({
           const pointDate = parseISO(point.timestamp);
           return isWithinInterval(pointDate, { start: startDate, end: endDate });
         } catch (e) {
-          // console.error("Error parsing date for filtering:", point.timestamp, e);
           return false;
         }
       });
     } else {
-      // Default filter if date range is not fully set (e.g. only 'from' is selected)
       const defaultStartDate = startOfDay(subDays(new Date(), 6));
       const defaultEndDate = endOfDay(new Date());
        newFilteredData = ALL_MOCK_HISTORICAL_DATA.filter(point => {
@@ -111,23 +116,16 @@ export default function DashboardClientContent({
             if (printWindow) printWindow.close();
             return;
           }
-
-          // Store original display style and make the element visible
           const originalDisplay = reportElement.style.display;
- reportElement.style.display = 'block';
-
+          reportElement.style.display = 'block';
           printWindow.document.write('<html><head><title>BreatheEasy Report</title>');
           printWindow.document.write('<style>body { font-family: sans-serif; margin: 20px; } table { width: 100%; border-collapse: collapse; } th, td { border: 1px solid #ddd; padding: 8px; text-align: left; } h1,h2,h3 { color: #64B5F6; } .whitespace-pre-line { white-space: pre-line; } </style>');
           printWindow.document.write('</head><body>');
-          
           printWindow.document.write(reportElement.innerHTML);
-
-          // Restore original display style after printing
           printWindow.onafterprint = () => {
             reportElement.style.display = originalDisplay;
-            if (printWindow) printWindow.close(); // Close window after printing
+            if (printWindow) printWindow.close(); 
           };
-          
           printWindow.document.write('</body></html>');
           printWindow.document.close();
           printWindow.print();
@@ -140,14 +138,13 @@ export default function DashboardClientContent({
   return (
     <div className="flex-1 space-y-6 p-4 md:p-6 lg:p-8">
       <div className="flex flex-col sm:flex-row justify-end items-center gap-4 mb-6">
-        {/* <h2 className="text-2xl font-semibold tracking-tight">Air Quality Overview</h2> Removed */}
         <Popover>
           <PopoverTrigger asChild>
             <Button
               id="date"
               variant={"outline"}
               className={cn(
-                "w-full sm:w-[260px] justify-start text-left font-normal", // Adjusted width for responsiveness
+                "w-full sm:w-[260px] justify-start text-left font-normal",
                 !date && "text-muted-foreground"
               )}
             >
@@ -162,7 +159,7 @@ export default function DashboardClientContent({
                   format(date.from, "LLL dd, y")
                 )
               ) : (
-                <span>Pick a date range</span>
+                <span>{t('pickDateRange')}</span>
               )}
             </Button>
           </PopoverTrigger>
@@ -174,7 +171,7 @@ export default function DashboardClientContent({
               selected={date}
               onSelect={setDate}
               numberOfMonths={2}
-              disabled={(d) => d > new Date() || d < subDays(new Date(), 60)} // Example: disable future dates and dates older than 60 days
+              disabled={(d) => d > new Date() || d < subDays(new Date(), 60)}
             />
           </PopoverContent>
         </Popover>
@@ -182,12 +179,12 @@ export default function DashboardClientContent({
 
       <RealtimeDataGrid data={MOCK_AIR_QUALITY_DATA} />
       <DataVisualization historicalData={filteredHistoricalData} />
-      <Suspense fallback={<AIAnalyzerSkeleton />}>
+      <Suspense fallback={<AIAnalyzerSkeleton t={t} />}>
         {children}
       </Suspense>
       
       <div id="printable-report-content-client" style={{ display: 'none' }}>
-        <PrintableReport airQualityData={MOCK_AIR_QUALITY_DATA} aiAnalysis={aiAnalysisForReport} />
+        <PrintableReport airQualityData={MOCK_AIR_QUALITY_DATA} aiAnalysis={aiAnalysisForReport} lng={lng} />
       </div>
     </div>
   );

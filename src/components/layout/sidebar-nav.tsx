@@ -1,30 +1,35 @@
+
+"use client";
 import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarMenuBadge,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Activity, BarChart3, Brain, MessageCircle, Settings } from "lucide-react";
+import { LayoutDashboard, Activity, BarChart3, Brain } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslation } from 'react-i18next';
 
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "#realtime", label: "Real-time Data", icon: Activity },
-  { href: "#visualizations", label: "Visualizations", icon: BarChart3 },
-  { href: "#analyzer", label: "AI Analyzer", icon: Brain },
-  // Chatbot is a modal/drawer, not a section to scroll to via sidebar
-  // { href: "#chatbot", label: "AI Chatbot", icon: MessageCircle }, 
-];
 
-export function SidebarNav() {
+interface SidebarNavProps {
+  lng: string;
+}
+
+export function SidebarNav({ lng }: SidebarNavProps) {
   const pathname = usePathname();
+  const { t } = useTranslation();
 
-  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+  const navItems = [
+    { href: `/${lng}/dashboard`, labelKey: "sidebarDashboard", icon: LayoutDashboard, sectionId: "" },
+    { href: "#realtime", labelKey: "sidebarRealTimeData", icon: Activity, sectionId: "realtime" },
+    { href: "#visualizations", labelKey: "sidebarVisualizations", icon: BarChart3, sectionId: "visualizations" },
+    { href: "#analyzer", labelKey: "sidebarAIAnalyzer", icon: Brain, sectionId: "analyzer" },
+  ];
+
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string, sectionId: string) => {
     if (href.startsWith("#")) {
       e.preventDefault();
-      const targetId = href.substring(1);
-      const targetElement = document.getElementById(targetId);
+      const targetElement = document.getElementById(sectionId);
       if (targetElement) {
         targetElement.scrollIntoView({ behavior: "smooth" });
       }
@@ -32,21 +37,20 @@ export function SidebarNav() {
     // For actual page links, NextLink will handle navigation
   };
 
-
   return (
     <SidebarMenu>
       {navItems.map((item) => (
-        <SidebarMenuItem key={item.label}>
+        <SidebarMenuItem key={item.labelKey}>
           <Link href={item.href} passHref legacyBehavior>
             <SidebarMenuButton
               asChild
               isActive={item.href.startsWith("#") ? false : pathname === item.href}
-              tooltip={{ children: item.label, side: "right", align: "center" }}
-              onClick={(e) => handleClick(e as unknown as React.MouseEvent<HTMLAnchorElement>, item.href)}
+              tooltip={{ children: t(item.labelKey), side: "right", align: "center" }}
+              onClick={(e) => handleClick(e as unknown as React.MouseEvent<HTMLAnchorElement>, item.href, item.sectionId)}
             >
               <a>
                 <item.icon />
-                <span>{item.label}</span>
+                <span>{t(item.labelKey)}</span>
               </a>
             </SidebarMenuButton>
           </Link>

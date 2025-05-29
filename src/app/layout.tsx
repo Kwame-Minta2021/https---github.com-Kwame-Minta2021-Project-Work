@@ -1,24 +1,6 @@
 
-import type {Metadata} from 'next';
-import {Geist, Geist_Mono} from 'next/font/google';
-import './globals.css';
-import { Toaster } from "@/components/ui/toaster";
-import { ThemeProvider } from "@/context/theme-provider";
-
-const geistSans = Geist({
-  variable: '--font-geist-sans',
-  subsets: ['latin'],
-});
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-});
-
-export const metadata: Metadata = {
-  title: 'BreatheEasy Dashboard',
-  description: 'Air Quality Monitoring Dashboard',
-};
+// This is now a minimal root layout, as [lng]/layout.tsx will be the main one.
+import './globals.css'; // Keep global styles accessible
 
 export default function RootLayout({
   children,
@@ -27,17 +9,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`} suppressHydrationWarning={true}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-          <Toaster />
-        </ThemeProvider>
-      </body>
+      <body suppressHydrationWarning={true}>{children}</body>
     </html>
   );
 }

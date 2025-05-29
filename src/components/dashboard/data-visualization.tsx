@@ -10,9 +10,11 @@ import type { HistoricalDataPoint } from '@/types';
 import { parseISO, format, differenceInDays, isValid } from 'date-fns';
 import React from "react";
 import { Info } from "lucide-react";
+import { useTranslation } from 'react-i18next'; // Import useTranslation
 
 interface DataVisualizationProps {
   historicalData: HistoricalDataPoint[];
+  // lng: string; // No longer needed
 }
 
 interface GuidelineInfoProps {
@@ -38,6 +40,7 @@ const GuidelineItem: React.FC<GuidelineInfoProps> = ({ pollutant, guidelines, ge
 
 
 export default function DataVisualization({ historicalData }: DataVisualizationProps) {
+  const { t } = useTranslation(); // Use the hook
   
   const xAxisTickFormatter = (isoTimestamp: string) => {
     if (!historicalData || historicalData.length === 0) {
@@ -87,18 +90,18 @@ export default function DataVisualization({ historicalData }: DataVisualizationP
   
   return (
     <section id="visualizations" className="mb-8 scroll-mt-20">
-      <h2 className="text-2xl font-semibold tracking-tight mb-4">Data Visualizations</h2>
+      <h2 className="text-2xl font-semibold tracking-tight mb-4">{t('dataVisualizations')}</h2>
       <Tabs defaultValue="line" className="w-full">
         <TabsList className="grid w-full grid-cols-3 mb-4">
-          <TabsTrigger value="line">Line Charts</TabsTrigger>
-          <TabsTrigger value="bar">Bar Graphs</TabsTrigger>
-          <TabsTrigger value="guidelines">AQ Guidelines</TabsTrigger>
+          <TabsTrigger value="line">{t('lineCharts')}</TabsTrigger>
+          <TabsTrigger value="bar">{t('barGraphs')}</TabsTrigger>
+          <TabsTrigger value="guidelines">{t('aqGuidelines')}</TabsTrigger>
         </TabsList>
         <TabsContent value="line">
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle>Pollutant Trends Over Time</CardTitle>
-              <CardDescription>Hourly trends for key pollutants based on selected date range.</CardDescription>
+              <CardTitle>{t('pollutantTrends')}</CardTitle>
+              <CardDescription>{t('hourlyTrends')}</CardDescription>
             </CardHeader>
             <CardContent>
               <ChartContainer config={CHART_CONFIG} className="h-[400px] w-full">
@@ -125,8 +128,8 @@ export default function DataVisualization({ historicalData }: DataVisualizationP
         <TabsContent value="bar">
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle>Current Pollutant Levels</CardTitle>
-              <CardDescription>Comparison of current pollutant readings (not affected by date range).</CardDescription>
+              <CardTitle>{t('currentPollutantLevels')}</CardTitle>
+              <CardDescription>{t('currentPollutantDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
                <ChartContainer config={CHART_CONFIG} className="h-[400px] w-full">
@@ -151,9 +154,9 @@ export default function DataVisualization({ historicalData }: DataVisualizationP
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Info className="h-6 w-6 mr-2 text-primary" />
-                Air Quality Guidelines (WHO)
+                {t('whoGuidelinesTitle')}
               </CardTitle>
-              <CardDescription>Reference values recommended by the World Health Organization for key air pollutants. These are health-based guidelines.</CardDescription>
+              <CardDescription>{t('whoGuidelinesDesc')}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <GuidelineItem

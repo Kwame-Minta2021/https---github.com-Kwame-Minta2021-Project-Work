@@ -1,14 +1,19 @@
+
+"use client";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { FileDown, Bot } from "lucide-react";
-import type { PrintHandler } from '@/app/dashboard/layout';
+import type { PrintHandler } from '@/app/[lng]/dashboard/layout'; // Adjusted path
+import { useTranslation } from 'react-i18next';
 
 interface HeaderProps {
   onPrint: PrintHandler;
   onToggleChatbot: () => void;
+  lng: string; // Add lng prop
 }
 
-export function Header({ onPrint, onToggleChatbot }: HeaderProps) {
+export function Header({ onPrint, onToggleChatbot, lng }: HeaderProps) {
+  const { t } = useTranslation();
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-md sm:px-6">
       <SidebarTrigger className="md:hidden" />
@@ -21,17 +26,17 @@ export function Header({ onPrint, onToggleChatbot }: HeaderProps) {
           <path d="M22 12a2.5 2.5 0 00-2.5-2.5H17a2.5 2.5 0 000 5h2.5A2.5 2.5 0 0022 12z"/>
         </svg>
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          BreatheEasy Dashboard
+          {t('dashboardTitle')}
         </h1>
       </div>
       <div className="ml-auto flex items-center gap-2">
         <Button variant="outline" size="sm" onClick={onToggleChatbot}>
           <Bot className="mr-2 h-4 w-4" />
-          AI Chatbot
+          {t('aiChatbot')}
         </Button>
         <Button variant="outline" size="sm" onClick={onPrint}>
           <FileDown className="mr-2 h-4 w-4" />
-          Generate PDF
+          {t('generatePdf')}
         </Button>
       </div>
     </header>

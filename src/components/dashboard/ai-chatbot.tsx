@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
@@ -5,9 +6,10 @@ import { askChatbot, type AskChatbotInput } from '@/ai/flows/interactive-ai-chat
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"; // Removed AvatarImage
 import { Send, BotIcon, UserIcon, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface Message {
   id: string;
@@ -17,9 +19,11 @@ interface Message {
 
 interface AIChatbotProps {
   currentReadings: Omit<AskChatbotInput, 'question'>;
+  lng: string; // Add lng prop
 }
 
-export default function AIChatbot({ currentReadings }: AIChatbotProps) {
+export default function AIChatbot({ currentReadings, lng }: AIChatbotProps) {
+  const { t } = useTranslation(); // Use the hook
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -39,7 +43,7 @@ export default function AIChatbot({ currentReadings }: AIChatbotProps) {
   }, [messages]);
   
   useEffect(() => {
-    // Initial greeting from the bot
+    // Initial greeting from the bot - this could also be translated if needed from a common key
     setMessages([
       { id: Date.now().toString(), text: "Hello! How can I help you with your air quality questions today?", sender: 'bot' }
     ]);
@@ -60,6 +64,8 @@ export default function AIChatbot({ currentReadings }: AIChatbotProps) {
         ...currentReadings,
         question: input,
       };
+      // Note: askChatbot itself is not language-aware in this setup.
+      // The *prompt* to the LLM would need to be adjusted for full AI response localization.
       const response = await askChatbot(chatbotInput);
       const botMessage: Message = { id: (Date.now() + 1).toString(), text: response.response, sender: 'bot' };
       setMessages(prev => [...prev, botMessage]);
@@ -121,7 +127,7 @@ export default function AIChatbot({ currentReadings }: AIChatbotProps) {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask about air quality..."
+          placeholder={t('chatbotInputPlaceholder')}
           className="flex-grow"
           disabled={isLoading}
         />
