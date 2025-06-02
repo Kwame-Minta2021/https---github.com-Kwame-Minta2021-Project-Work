@@ -2,21 +2,19 @@
 "use client";
 
 import * as React from "react";
-import { useParams, useRouter, usePathname } from "next/navigation"; // useParams is already here
+import { useParams, useRouter, usePathname } from "next/navigation"; 
 import { useTranslation } from 'react-i18next';
 import i18next from 'i18next';
 import resourcesToBackend from 'i18next-resources-to-backend';
 import { getOptions, languages, cookieName } from '@/i18n/config';
 import { initReactI18next } from 'react-i18next/initReactI18next';
 
-// Initialize i18next for client components that use useTranslation
 if (!i18next.isInitialized) {
   i18next
     .use(initReactI18next)
     .use(resourcesToBackend((language: string, namespace: string) => import(`@/locales/${language}/${namespace}.json`)))
     .init(getOptions());
 }
-
 
 import {
   SidebarProvider,
@@ -25,14 +23,14 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarInset,
-  SidebarTrigger,
+  // SidebarTrigger, // No longer needed directly here as it's in Header
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
 } from "@/components/ui/sidebar";
 import { Header } from "@/components/layout/header";
 import { SidebarNav } from "@/components/layout/sidebar-nav";
-import { Settings, Sun, Moon, Laptop, Languages } from "lucide-react"; // Added Languages icon
+import { Settings, Sun, Moon, Laptop, Languages } from "lucide-react"; 
 import AIChatbot from "@/components/dashboard/ai-chatbot"; 
 import { MOCK_AIR_QUALITY_DATA } from "@/lib/constants";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
@@ -42,30 +40,29 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuLabel,
-  DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
 import Cookies from 'js-cookie';
+import { useToast } from "@/hooks/use-toast";
+import { analyzeAirQuality, type AnalyzeAirQualityInput } from '@/ai/flows/analyze-air-quality';
+import { sendSmsReport, type SendSmsReportInput } from '@/ai/flows/send-sms-report-flow';
 
 
 export type PrintHandler = () => void;
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
-  // params: { lng: string }; // Removed params from props
 }
-
 
 export default function DashboardLayout({
   children,
-  // params: { lng: currentLng } // Removed params from function signature
 }: DashboardLayoutProps) {
-  const params = useParams(); // Use the hook to get route parameters
-  const currentLng = params.lng as string; // Extract lng from the hook's result
+  const params = useParams(); 
+  const currentLng = params.lng as string; 
 
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const pathname = usePathname();
+  const { toast } = useToast();
 
   React.useEffect(() => {
     if (i18n.resolvedLanguage !== currentLng) {
@@ -75,6 +72,7 @@ export default function DashboardLayout({
   
   const printRef = React.useRef<PrintHandler | null>(null);
   const [isChatbotOpen, setIsChatbotOpen] = React.useState(false);
+  const [isSendingSms, setIsSendingSms] = React.useState(false); // State for SMS sending
   const { setTheme } = useTheme();
 
   const handlePrint = () => {
@@ -87,9 +85,55 @@ export default function DashboardLayout({
 
   const changeLanguage = (newLng: string) => {
     Cookies.set(cookieName, newLng);
-    // Replace the current path's language segment
     const newPathname = pathname.replace(`/${currentLng}`, `/${newLng}`);
     router.push(newPathname);
+  };
+
+  const handleSendSmsReport = async () => {
+    setIsSendingSms(true);
+    try {
+      const aiInputForAnalysis: AnalyzeAirQualityInput = {
+        co: MOCK_AIR_QUALITY_DATA.co.value,
+        vocs: MOCK_AIR_QUALITY_DATA.vocs.value,
+        ch4Lpg: MOCK_AIR_QUALITY_DATA.ch4Lpg.value,
+        pm10: MOCK_AIR_QUALITY_DATA.pm1_0.value,
+        pm25: MOCK_AIR_QUALITY_DATA.pm2_5.value,
+        pm100: MOCK_AIR_QUALITY_DATA.pm10.value,
+        language: currentLng,
+      };
+      const analysisResult = await analyzeAirQuality(aiInputForAnalysis);
+
+      const smsFlowInput: SendSmsReportInput = {
+        reportDate: new Date().toISOString(),
+        language: currentLng,
+        currentReadings: {
+          co: MOCK_AIR_QUALITY_DATA.co.value,
+          vocs: MOCK_AIR_QUALITY_DATA.vocs.value,
+          ch4Lpg: MOCK_AIR_QUALITY_DATA.ch4Lpg.value,
+          pm1_0: MOCK_AIR_QUALITY_DATA.pm1_0.value,
+          pm2_5: MOCK_AIR_QUALITY_DATA.pm2_5.value,
+          pm10: MOCK_AIR_QUALITY_DATA.pm10.value,
+        },
+        aiAnalysis: analysisResult, 
+        // targetPhoneNumber: process.env.NEXT_PUBLIC_CONTROL_UNIT_PHONE // Example if using client-side accessible env var
+      };
+
+      const result = await sendSmsReport(smsFlowInput);
+      toast({
+        title: t('smsReportStatus'),
+        description: result.status,
+      });
+
+    } catch (error) {
+      console.error("Failed to send SMS report:", error);
+      toast({
+        variant: "destructive",
+        title: t('smsReportErrorTitle'),
+        description: t('smsReportErrorDescription') + (error instanceof Error ? `: ${error.message}` : ''),
+      });
+    } finally {
+      setIsSendingSms(false);
+    }
   };
 
 
@@ -144,7 +188,7 @@ export default function DashboardLayout({
               <DropdownMenuTrigger asChild>
                 <SidebarMenuItem>
                   <SidebarMenuButton tooltip={{children: t('changeLanguage'), side: "right", align: "center"}}>
-                    <Languages /> {/* Using Languages icon */}
+                    <Languages /> 
                     <span>{t('changeLanguage')}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -166,11 +210,13 @@ export default function DashboardLayout({
         <Header 
           onPrint={handlePrint} 
           onToggleChatbot={toggleChatbot}
+          onSendSmsReport={handleSendSmsReport} // Pass new handler
+          isSendingSms={isSendingSms} // Pass loading state
           lng={currentLng}
         />
         {React.cloneElement(children as React.ReactElement, { 
           setPrintHandler: (handler: PrintHandler) => printRef.current = handler,
-          lng: currentLng // Pass lng to children of layout (e.g. page.tsx)
+          lng: currentLng 
         })}
       </SidebarInset>
 
