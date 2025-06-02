@@ -2,12 +2,11 @@
 // src/components/dashboard/dashboard-client-content.tsx
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
-import { Suspense } from 'react';
+import React, { useEffect, useRef, useState, Suspense } from 'react';
 import { DateRange } from 'react-day-picker';
 import { subDays, format, parseISO, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
-import { useTranslation } from 'react-i18next'; 
+import { useTranslation } from 'react-i18next';
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -20,15 +19,16 @@ import PrintableReport from '@/components/dashboard/printable-report';
 import { MOCK_AIR_QUALITY_DATA, MOCK_HISTORICAL_DATA as ALL_MOCK_HISTORICAL_DATA } from '@/lib/constants';
 import type { HistoricalDataPoint, CustomAlertSettings, AirQualityData } from '@/types';
 import type { AnalyzeAirQualityOutput } from '@/ai/flows/analyze-air-quality';
-import type { SetPrintHandlerType } from '@/app/[lng]/dashboard/layout'; 
+import type { SetPrintHandlerType } from '@/app/[lng]/dashboard/layout';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { sendShortAlertSms, type SendShortAlertInput } from '@/ai/flows/send-short-alert-sms-flow';
+// Removed sendShortAlertSms import as it's no longer used for automatic alerts here
+// import { sendShortAlertSms, type SendShortAlertInput } from '@/ai/flows/send-short-alert-sms-flow';
 
 interface DashboardClientContentProps {
-  setPrintHandler?: SetPrintHandlerType; 
+  setPrintHandler?: SetPrintHandlerType;
   aiAnalysisForReport: AnalyzeAirQualityOutput | null;
-  children: React.ReactNode; 
+  children: React.ReactNode;
   lng: string;
   initialCustomAlertSettings: CustomAlertSettings;
 }
@@ -64,70 +64,74 @@ function AIAnalyzerSkeleton({ t }: { t: (key: string) => string }) {
 }
 
 const checkAlertsAndNotify = (
-  lng: string, 
-  currentSettings: CustomAlertSettings, 
+  lng: string,
+  currentSettings: CustomAlertSettings,
   airData: AirQualityData,
   t: (key: string, options?: any) => string,
-  toastFn: (options: any) => void 
+  toastFn: (options: any) => void
 ) => {
+  console.log("DashboardClientContent: Checking custom alerts. Settings:", currentSettings, "AirData CO:", airData.co.value, "PM2.5:", airData.pm2_5.value);
   if (currentSettings.co?.enabled && airData.co.value > currentSettings.co.threshold) {
     toastFn({
       title: t('customThresholdAlertTitle'),
-      description: t('customCOAlertDesc', { 
-        value: airData.co.value.toFixed(2), 
+      description: t('customCOAlertDesc', {
+        value: airData.co.value.toFixed(2),
         threshold: currentSettings.co.threshold.toFixed(2),
-        unit: 'ppm' 
+        unit: 'ppm'
       }),
-      variant: 'warning', 
+      variant: 'warning',
     });
+     console.log("DashboardClientContent: CO custom alert triggered.");
   }
 
   if (currentSettings.pm2_5?.enabled && airData.pm2_5.value > currentSettings.pm2_5.threshold) {
     toastFn({
       title: t('customThresholdAlertTitle'),
-      description: t('customPM25AlertDesc', { 
-        value: airData.pm2_5.value.toFixed(0), 
+      description: t('customPM25AlertDesc', {
+        value: airData.pm2_5.value.toFixed(0),
         threshold: currentSettings.pm2_5.threshold.toFixed(0),
         unit: 'µg/m³'
       }),
       variant: 'warning',
     });
+    console.log("DashboardClientContent: PM2.5 custom alert triggered.");
   }
 
-  Object.values(airData).forEach(pollutant => {
-    if (typeof pollutant === 'object' && pollutant.thresholds?.unhealthy && pollutant.value > pollutant.thresholds.unhealthy) {
-      const smsInput: SendShortAlertInput = {
-        pollutantName: pollutant.name.split(' ')[0], 
-        currentValue: pollutant.value,
-        thresholdValue: pollutant.thresholds.unhealthy,
-        unit: pollutant.unit,
-        language: lng,
-      };
-      sendShortAlertSms(smsInput)
-        .then(result => {
-          console.log(`SMS alert attempt for ${pollutant.name}: ${result.status}`);
-        })
-        .catch(error => {
-          console.error(`Failed to send SMS alert for ${pollutant.name}:`, error);
-        });
-    }
-  });
+  // Removed the loop that automatically sent SMS for general unhealthy thresholds
+  // Object.values(airData).forEach(pollutant => {
+  //   if (typeof pollutant === 'object' && pollutant.thresholds?.unhealthy && pollutant.value > pollutant.thresholds.unhealthy) {
+  //     const smsInput: SendShortAlertInput = {
+  //       pollutantName: pollutant.name.split(' ')[0], 
+  //       currentValue: pollutant.value,
+  //       thresholdValue: pollutant.thresholds.unhealthy,
+  //       unit: pollutant.unit,
+  //       language: lng,
+  //     };
+  //     sendShortAlertSms(smsInput)
+  //       .then(result => {
+  //         console.log(`SMS alert attempt for ${pollutant.name}: ${result.status}`);
+  //       })
+  //       .catch(error => {
+  //         console.error(`Failed to send SMS alert for ${pollutant.name}:`, error);
+  //       });
+  //   }
+  // });
 };
 
 
-export default function DashboardClientContent({ 
-  setPrintHandler, 
+export default function DashboardClientContent({
+  setPrintHandler,
   aiAnalysisForReport,
   children,
-  lng, 
+  lng,
   initialCustomAlertSettings,
 }: DashboardClientContentProps) {
-  const { t } = useTranslation(); 
+  const { t } = useTranslation();
   const { toast } = useToast();
   const reportContentRef = React.useRef<HTMLDivElement>(null);
-  
+
   const [date, setDate] = React.useState<DateRange | undefined>({
-    from: startOfDay(subDays(new Date(), 6)), 
+    from: startOfDay(subDays(new Date(), 6)),
     to: endOfDay(new Date()),
   });
 
@@ -136,8 +140,9 @@ export default function DashboardClientContent({
   const [isPdfLibReady, setIsPdfLibReady] = useState(false);
 
   useEffect(() => {
+    console.log("DashboardClientContent: Initial load effect triggered. initialCustomAlertSettings:", initialCustomAlertSettings, "aiAnalysisForReport available:", !!aiAnalysisForReport);
     if (initialCustomAlertSettings && MOCK_AIR_QUALITY_DATA && t && toast) {
-      checkAlertsAndNotify(lng, initialCustomAlertSettings, MOCK_AIR_QUALITY_DATA, t, toast);
+        checkAlertsAndNotify(lng, initialCustomAlertSettings, MOCK_AIR_QUALITY_DATA, t, toast);
     }
     if(aiAnalysisForReport && toast && t) {
         toast({ title: t('aiAnalysisUpdatedTitle'), description: t('aiAnalysisUpdatedDesc') });
@@ -185,11 +190,13 @@ export default function DashboardClientContent({
       })
       .catch(err => {
         console.error("DashboardClientContent: Failed to load html2pdf.js", err);
+         setIsPdfLibReady(false); // Ensure state reflects failure
         if (typeof setPrintHandler === 'function') {
-          setPrintHandler(null); 
+          setPrintHandler(null);
         }
       });
-  }, [setPrintHandler]);
+  }, []);
+
 
   useEffect(() => {
     console.log(
@@ -202,19 +209,19 @@ export default function DashboardClientContent({
     if (typeof setPrintHandler === 'function') {
       if (isPdfLibReady && html2pdfInstance && reportContentRef.current) {
         console.log("DashboardClientContent: Conditions met - html2pdf.js is loaded AND reportContentRef IS available.");
-        
+
         const handleGeneratePdf = async () => {
           console.log("DashboardClientContent: Attempting to generate PDF with html2pdf.js. reportContentRef exists:", !!reportContentRef.current);
-              
+
           if (reportContentRef.current && html2pdfInstance) {
             const element = reportContentRef.current;
             const timestamp = format(new Date(), 'yyyyMMdd_HHmmss');
             const filename = `BreatheEasy_Report_${timestamp}.pdf`;
-            
+
             console.log("DashboardClientContent: Element to print:", element);
 
             const opt = {
-              margin:       0.5, 
+              margin:       0.5,
               filename:     filename,
               image:        { type: 'jpeg', quality: 0.98 },
               html2canvas:  { scale: 2, useCORS: true, logging: false, letterRendering: true, width: element.scrollWidth, height: element.scrollHeight },
@@ -234,12 +241,12 @@ export default function DashboardClientContent({
             toast({ variant: "destructive", title: t('pdfGenerationErrorTitle'), description: t('reportContentMissingError') });
           }
         };
-        
+
         setPrintHandler(handleGeneratePdf);
         console.log("DashboardClientContent: PDF generation handler (using html2pdf.js) has been SET.");
       } else {
         console.warn("DashboardClientContent: Conditions NOT met for setting print handler. isPdfLibReady:", isPdfLibReady, "hasRef:", !!reportContentRef.current, "hasInstance:",!!html2pdfInstance, ". Print handler not set (or reset).");
-        setPrintHandler(null); 
+        setPrintHandler(null);
       }
 
       return () => {
@@ -249,11 +256,11 @@ export default function DashboardClientContent({
         }
       };
     }
-  }, [isPdfLibReady, html2pdfInstance, setPrintHandler, t, lng, toast]); 
+  }, [isPdfLibReady, html2pdfInstance, setPrintHandler, t, lng, toast]);
 
-  const selectedDateRangeString = date?.from && date?.to 
+  const selectedDateRangeString = date?.from && date?.to
     ? `${format(date.from, "LLL dd, y")} - ${format(date.to, "LLL dd, y")}`
-    : date?.from 
+    : date?.from
     ? format(date.from, "LLL dd, y")
     : t('noDateRangeSelected');
 
@@ -305,14 +312,14 @@ export default function DashboardClientContent({
       <Suspense fallback={<AIAnalyzerSkeleton t={t} />}>
         {children}
       </Suspense>
-      
+
       <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', width: '8.5in', backgroundColor: 'white', color: '#333' }} id="pdf-render-source-container">
-        <PrintableReport 
-            ref={reportContentRef} 
-            airQualityData={MOCK_AIR_QUALITY_DATA} 
-            aiAnalysis={aiAnalysisForReport} 
+        <PrintableReport
+            ref={reportContentRef}
+            airQualityData={MOCK_AIR_QUALITY_DATA}
+            aiAnalysis={aiAnalysisForReport}
             lng={lng}
-            selectedDateRange={selectedDateRangeString} 
+            selectedDateRange={selectedDateRangeString}
         />
       </div>
     </div>
