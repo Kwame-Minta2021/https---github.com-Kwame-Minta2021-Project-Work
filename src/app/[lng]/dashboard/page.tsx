@@ -28,7 +28,21 @@ async function fetchAIAnalysisForReport(lng: string): Promise<AnalyzeAirQualityO
     const analysis = await analyzeAirQuality(aiInput);
     return analysis;
   } catch (error) {
-    console.error("Failed to fetch AI analysis for report:", error);
+    console.error("Failed to fetch AI analysis for report. Raw error object:", error);
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error name:", error.name);
+      if (error.stack) {
+        console.error("Error stack:", error.stack);
+      }
+    } else if (typeof error === 'object' && error !== null) {
+      // Attempt to log properties of the error object if it's not an Error instance
+      for (const key in error) {
+        if (Object.prototype.hasOwnProperty.call(error, key)) {
+          console.error(`Error property - ${key}:`, (error as any)[key]);
+        }
+      }
+    }
     return null;
   }
 }
