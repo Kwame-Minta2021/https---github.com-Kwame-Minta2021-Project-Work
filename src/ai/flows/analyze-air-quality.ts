@@ -105,21 +105,25 @@ const analyzeAirQualityFlow = ai.defineFlow(
         const isRetriableError = errorMessage.includes('503') || errorMessage.includes('overloaded') || errorMessage.includes('service unavailable');
 
         if (isRetriableError && attempts < MAX_ATTEMPTS) {
-          const delay = 1000 * (attempts + Math.floor(attempts / 2)); 
-          console.warn(`analyzeAirQualityFlow attempt ${attempts} of ${MAX_ATTEMPTS} failed due to model overload for prompt '${analyzeAirQualityPrompt.name}'. Retrying in ${delay / 1000}s...`);
+          // Exponential backoff: 1s, 2s, 4s, 8s, 16s for the 5 retries
+          const delay = 1000 * Math.pow(2, attempts - 1); 
+          console.warn(`analyzeAirQualityFlow attempt ${attempts} of ${MAX_ATTEMPTS-1} retries failed for prompt '${analyzeAirQualityPrompt.name}'. Retrying in ${delay / 1000}s... Error: ${error.message}`);
           await new Promise(resolve => setTimeout(resolve, delay));
         } else {
-          console.error(`analyzeAirQualityFlow failed for prompt '${analyzeAirQualityPrompt.name}' after ${attempts} attempt(s). Last error:`, lastError);
+          console.error(`analyzeAirQualityFlow failed for prompt '${analyzeAirQualityPrompt.name}' after ${attempts} attempt(s) (including initial). Last error:`, lastError);
           throw lastError; 
         }
       }
     }
     
+    // This part should ideally not be reached if MAX_ATTEMPTS > 0 and loop/throw logic is correct.
+    // However, as a safeguard:
     if (lastError) {
         console.error(`analyzeAirQualityFlow ultimately failed for prompt '${analyzeAirQualityPrompt.name}' after ${attempts} attempts. Last error:`, lastError);
         throw lastError;
     }
     
+    // Fallback, should not happen with MAX_ATTEMPTS > 0.
     throw new Error(`analyzeAirQualityFlow failed for prompt '${analyzeAirQualityPrompt.name}' after max retries. Unknown error during retry loop.`);
   }
 );
