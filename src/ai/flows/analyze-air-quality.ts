@@ -64,9 +64,32 @@ const analyzeAirQualityFlow = ai.defineFlow(
     inputSchema: AnalyzeAirQualityInputSchema,
     outputSchema: AnalyzeAirQualityOutputSchema,
   },
-  async input => {
-    const {output} = await analyzeAirQualityPrompt(input);
-    return output!;
+  async (input) => {
+    const MAX_ATTEMPTS = 3; // Total attempts: 1 initial + 2 retries
+    let attempts = 0;
+
+    while (attempts < MAX_ATTEMPTS) {
+      try {
+        const {output} = await analyzeAirQualityPrompt(input);
+        return output!;
+      } catch (error: any) {
+        attempts++;
+        const errorMessage = typeof error.message === 'string' ? error.message.toLowerCase() : '';
+        const isRetriableError = errorMessage.includes('503') || errorMessage.includes('overloaded') || errorMessage.includes('service unavailable');
+        
+        if (isRetriableError && attempts < MAX_ATTEMPTS) {
+          console.warn(`analyzeAirQualityFlow attempt ${attempts} failed due to model overload. Retrying in ${attempts * 1000}ms...`);
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempts)); // Wait (1s, 2s for 2nd and 3rd attempt)
+        } else {
+          // Not a retriable error or max retries reached
+          console.error(`analyzeAirQualityFlow failed after ${attempts} attempts. Last error:`, error);
+          throw error; 
+        }
+      }
+    }
+    // This fallback should theoretically not be reached given MAX_ATTEMPTS > 0
+    // and the logic re-throwing the error. It's here for exhaustive error handling.
+    throw new Error("analyzeAirQualityFlow failed after max retries and did not correctly throw the last error.");
   }
 );
 
