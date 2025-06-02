@@ -5,10 +5,8 @@ import DashboardClientContent from '@/components/dashboard/dashboard-client-cont
 import AIAnalyzerSection from '@/components/dashboard/ai-analyzer-section';
 import { MOCK_AIR_QUALITY_DATA } from '@/lib/constants';
 import { analyzeAirQuality, type AnalyzeAirQualityOutput, type AnalyzeAirQualityInput } from '@/ai/flows/analyze-air-quality';
-// import { sendShortAlertSms, type SendShortAlertInput } from '@/ai/flows/send-short-alert-sms-flow'; // Moved to DashboardClientContent
 import type { SetPrintHandlerType } from './layout'; 
-import type { CustomAlertSettings } from '@/types'; // Removed AirQualityData as MOCK is used in client
-// import { toast } from '@/hooks/use-toast'; // Moved to DashboardClientContent
+import type { CustomAlertSettings } from '@/types'; 
 import { getTranslations } from '@/i18n';
 
 
@@ -54,7 +52,6 @@ async function fetchAIAnalysisForReport(lng: string): Promise<AnalyzeAirQualityO
 
 
 export default async function DashboardPage({ setPrintHandler, params: { lng }, customAlertSettings }: DashboardPageProps) {
-  // const { t } = await getTranslations(lng, 'common'); // t function will be obtained in DashboardClientContent via useTranslation
   const aiAnalysisForReportData = await fetchAIAnalysisForReport(lng);
   
   const rawSensorReadingsForAnalyzer: Omit<AnalyzeAirQualityInput, 'language'> = {

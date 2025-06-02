@@ -63,7 +63,6 @@ function AIAnalyzerSkeleton({ t }: { t: (key: string) => string }) {
   );
 }
 
-// Moved from page.tsx
 const checkAlertsAndNotify = (
   lng: string, 
   currentSettings: CustomAlertSettings, 
@@ -71,7 +70,6 @@ const checkAlertsAndNotify = (
   t: (key: string, options?: any) => string,
   toastFn: (options: any) => void 
 ) => {
-  // Check custom CO threshold
   if (currentSettings.co?.enabled && airData.co.value > currentSettings.co.threshold) {
     toastFn({
       title: t('customThresholdAlertTitle'),
@@ -84,7 +82,6 @@ const checkAlertsAndNotify = (
     });
   }
 
-  // Check custom PM2.5 threshold
   if (currentSettings.pm2_5?.enabled && airData.pm2_5.value > currentSettings.pm2_5.threshold) {
     toastFn({
       title: t('customThresholdAlertTitle'),
@@ -97,7 +94,6 @@ const checkAlertsAndNotify = (
     });
   }
 
-  // Check for predefined unhealthy thresholds for SMS
   Object.values(airData).forEach(pollutant => {
     if (typeof pollutant === 'object' && pollutant.thresholds?.unhealthy && pollutant.value > pollutant.thresholds.unhealthy) {
       const smsInput: SendShortAlertInput = {
@@ -140,14 +136,13 @@ export default function DashboardClientContent({
   const [isPdfLibReady, setIsPdfLibReady] = useState(false);
 
   useEffect(() => {
-    // Initial load logic, previously in onInitialLoad
     if (initialCustomAlertSettings && MOCK_AIR_QUALITY_DATA && t && toast) {
       checkAlertsAndNotify(lng, initialCustomAlertSettings, MOCK_AIR_QUALITY_DATA, t, toast);
     }
     if(aiAnalysisForReport && toast && t) {
         toast({ title: t('aiAnalysisUpdatedTitle'), description: t('aiAnalysisUpdatedDesc') });
     }
-  }, [initialCustomAlertSettings, lng, t, toast, aiAnalysisForReport]);
+  }, [initialCustomAlertSettings, aiAnalysisForReport, lng, t, toast]);
 
 
   React.useEffect(() => {
