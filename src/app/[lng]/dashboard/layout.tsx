@@ -76,8 +76,12 @@ export default function DashboardLayout({
   const { setTheme } = useTheme();
 
   const handlePrint = () => {
+    console.log("DashboardLayout: handlePrint triggered. printRef.current:", printRef.current);
     if (printRef.current) {
       printRef.current();
+    } else {
+      console.error("DashboardLayout: Print handler (printRef.current) is not set.");
+      alert("Report generation feature is not ready. Please try again in a moment.");
     }
   };
   
@@ -210,8 +214,8 @@ export default function DashboardLayout({
         <Header 
           onPrint={handlePrint} 
           onToggleChatbot={toggleChatbot}
-          onSendSmsReport={handleSendSmsReport} // Pass new handler
-          isSendingSms={isSendingSms} // Pass loading state
+          onSendSmsReport={handleSendSmsReport} 
+          isSendingSms={isSendingSms} 
           lng={currentLng}
         />
         {React.cloneElement(children as React.ReactElement, { 

@@ -7,7 +7,7 @@ import { Suspense } from 'react';
 import { DateRange } from 'react-day-picker';
 import { subDays, format, parseISO, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
-import { useTranslation } from 'react-i18next'; // Import useTranslation
+import { useTranslation } from 'react-i18next'; 
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -20,15 +20,14 @@ import PrintableReport from '@/components/dashboard/printable-report';
 import { MOCK_AIR_QUALITY_DATA, MOCK_HISTORICAL_DATA as ALL_MOCK_HISTORICAL_DATA } from '@/lib/constants';
 import type { HistoricalDataPoint } from '@/types';
 import type { AnalyzeAirQualityOutput } from '@/ai/flows/analyze-air-quality';
-import type { PrintHandler } from '@/app/[lng]/dashboard/layout'; // Adjusted path
+import type { PrintHandler } from '@/app/[lng]/dashboard/layout'; 
 import { cn } from '@/lib/utils';
 
 interface DashboardClientContentProps {
   setPrintHandler?: (handler: PrintHandler) => void;
   aiAnalysisForReport: AnalyzeAirQualityOutput | null;
-  children: React.ReactNode; // For AIAnalyzerSection
+  children: React.ReactNode; 
   lng: string;
-  // t: (key: string) => string; // Remove t from props
 }
 
 function AIAnalyzerSkeleton({ t }: { t: (key: string) => string }) {
@@ -65,10 +64,9 @@ export default function DashboardClientContent({
   setPrintHandler, 
   aiAnalysisForReport,
   children,
-  lng, // Receive lng
-  // t // t is no longer received as a prop
+  lng, 
 }: DashboardClientContentProps) {
-  const { t } = useTranslation(); // Get t function using the hook
+  const { t } = useTranslation(); 
   
   const [date, setDate] = React.useState<DateRange | undefined>({
     from: startOfDay(subDays(new Date(), 6)), 
@@ -108,32 +106,102 @@ export default function DashboardClientContent({
   React.useEffect(() => {
     if (typeof setPrintHandler === 'function') {
       const handlePrintRequest = () => {
-        const printWindow = window.open('', '_blank');
+        console.log("DashboardClientContent: Attempting to print report...");
+        const printWindow = window.open('', '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
+
         if (printWindow) {
+          console.log("DashboardClientContent: Print window opened successfully.");
           const reportElement = document.getElementById('printable-report-content-client');
+
           if (!reportElement) {
-            console.error('Printable report content element not found.');
-            if (printWindow) printWindow.close();
+            console.error('DashboardClientContent: Printable report content element not found (id: printable-report-content-client).');
+            try { printWindow.alert('Error: Report content not found. Please try again.');} catch(e) {console.error("Failed to alert in print window",e);}
+            try { printWindow.close(); } catch(e) {console.error("Failed to close print window",e);}
             return;
           }
-          const originalDisplay = reportElement.style.display;
-          reportElement.style.display = 'block';
-          printWindow.document.write('<html><head><title>BreatheEasy Report</title>');
-          printWindow.document.write('<style>body { font-family: sans-serif; margin: 20px; } table { width: 100%; border-collapse: collapse; } th, td { border: 1px solid #ddd; padding: 8px; text-align: left; } h1,h2,h3 { color: #64B5F6; } .whitespace-pre-line { white-space: pre-line; } </style>');
-          printWindow.document.write('</head><body>');
-          printWindow.document.write(reportElement.innerHTML);
-          printWindow.onafterprint = () => {
-            reportElement.style.display = originalDisplay;
-            if (printWindow) printWindow.close(); 
-          };
-          printWindow.document.write('</body></html>');
+
+          const reportHTML = reportElement.innerHTML;
+          console.log("DashboardClientContent: Report HTML captured. Length:", reportHTML.length);
+
+          if (reportHTML.trim() === "") {
+              console.error('DashboardClientContent: Report content is empty.');
+              try {printWindow.alert('Error: Report content is empty. Cannot print.');} catch(e) {console.error("Failed to alert in print window",e);}
+              try {printWindow.close();} catch(e) {console.error("Failed to close print window",e);}
+              return;
+          }
+          
+          printWindow.document.open();
+          printWindow.document.write(`
+            <html>
+              <head>
+                <title>${t('reportTitle') || 'BreatheEasy Air Quality Report'}</title>
+                <style>
+                  body { font-family: Arial, Helvetica, sans-serif; margin: 25px; line-height: 1.6; color: #333; background-color: #fff; }
+                  table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                  th, td { border: 1px solid #ccc; padding: 10px; text-align: left; vertical-align: top; }
+                  th { background-color: #f0f4f7; font-weight: bold; color: #333; }
+                  h1, h2, h3 { color: #64B5F6; margin-block-start: 1em; margin-block-end: 0.67em; }
+                  h1 { font-size: 26px; font-weight: bold; text-align: center; margin-bottom: 15px; }
+                  h2 { font-size: 22px; font-weight: bold; margin-bottom: 12px; border-bottom: 2px solid #64B5F6; padding-bottom: 6px;}
+                  h3 { font-size: 18px; font-weight: bold; margin-bottom: 8px; color: #444;}
+                  p { margin-bottom: 12px; }
+                  .whitespace-pre-line { white-space: pre-line; }
+                  header, section, footer { margin-bottom: 25px; }
+                  footer { text-align: center; font-size: 13px; color: #777; margin-top: 30px; padding-top: 15px; border-top: 1px solid #eee; }
+                  /* Specific classes from PrintableReport for better fidelity */
+                  .text-gray-600 { color: #555; }
+                  .text-primary { color: #64B5F6; }
+                  .font-bold { font-weight: bold; }
+                  .font-semibold { font-weight: 600; }
+                  .text-xl { font-size: 20px; }
+                  .text-3xl { font-size: 28px; }
+                  .border-b-2 { border-bottom-width: 2px; }
+                  .border-primary { border-bottom-color: #64B5F6; } /* Simplified */
+                  .pb-2 { padding-bottom: 8px; }
+                  .leading-relaxed { line-height: 1.75; }
+                  .flex { display: flex; }
+                  .items-center { align-items: center; }
+                  .mr-2 { margin-right: 8px; } /* For potential icons in report */
+                  .bg-gray-100 { background-color: #f9f9f9; } /* For table header row */
+                  .text-sm { font-size: 14px; }
+                  .text-xs { font-size: 12px; }
+                </style>
+              </head>
+              <body>
+                ${reportHTML}
+              </body>
+            </html>
+          `);
           printWindow.document.close();
-          printWindow.print();
+
+          setTimeout(() => {
+            try {
+              printWindow.focus(); // Focus the new window before printing
+              printWindow.print();
+              console.log("DashboardClientContent: Print dialog initiated.");
+            } catch (e) {
+              console.error("DashboardClientContent: Error initiating print dialog.", e);
+              alert("Could not initiate print. Please try again or check browser console.");
+            }
+          }, 300); // Increased delay slightly
+
+          printWindow.onafterprint = () => {
+            console.log("DashboardClientContent: onafterprint event fired.");
+            // reportElement.style.display = originalDisplay; // The element is display:none anyway
+            try { printWindow.close(); } catch(e) {console.error("Failed to close print window post-print",e);}
+          };
+
+        } else {
+          console.error("DashboardClientContent: Failed to open print window. It might have been blocked by a popup blocker.");
+          alert(t('popupBlockerWarning') || "Failed to open print window. Please disable popup blockers for this site and try again.");
         }
       };
       setPrintHandler(handlePrintRequest);
+      console.log("DashboardClientContent: Print handler has been set.");
+    } else {
+      console.warn("DashboardClientContent: setPrintHandler was not a function. Print functionality will be disabled.");
     }
-  }, [setPrintHandler, aiAnalysisForReport]);
+  }, [setPrintHandler, aiAnalysisForReport, t, lng]); // Added t and lng as dependencies
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-6 lg:p-8">

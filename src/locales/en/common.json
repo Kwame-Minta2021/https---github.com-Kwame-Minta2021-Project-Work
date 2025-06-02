@@ -84,5 +84,6 @@
   "smsReportErrorDescription": "Failed to send SMS report. Check console for details.",
   "errorUnknown": "An unknown error occurred.",
   "errorModelOverloadedTitle": "AI Model Temporarily Unavailable",
-  "errorModelOverloadedSuggestion": "The AI service is currently experiencing high demand or is temporarily unavailable. Please try again in a few moments."
+  "errorModelOverloadedSuggestion": "The AI service is currently experiencing high demand or is temporarily unavailable. Please try again in a few moments.",
+  "popupBlockerWarning": "Failed to open print window. Please disable popup blockers for this site and try again."
 }
