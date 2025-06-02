@@ -8,6 +8,7 @@ import { DateRange } from 'react-day-picker';
 import { subDays, format, parseISO, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next'; 
+// Dynamic import for html2pdf.js will be used inside useEffect
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -76,6 +77,10 @@ export default function DashboardClientContent({
 
   const [filteredHistoricalData, setFilteredHistoricalData] = React.useState<HistoricalDataPoint[]>([]);
 
+  // State for html2pdf.js library
+  const [html2pdfInstance, setHtml2pdfInstance] = React.useState<any>(null);
+  const [isPdfLibReady, setIsPdfLibReady] = React.useState(false);
+
   React.useEffect(() => {
     let newFilteredData: HistoricalDataPoint[] = [];
     if (date?.from && date?.to) {
@@ -106,72 +111,90 @@ export default function DashboardClientContent({
     setFilteredHistoricalData(newFilteredData);
   }, [date]);
 
+  // Effect to load html2pdf.js once
   React.useEffect(() => {
-    console.log("DashboardClientContent: Print handler setup effect triggered. typeof setPrintHandler:", typeof setPrintHandler, "lng:", lng);
+    console.log("DashboardClientContent: Attempting to load html2pdf.js");
+    import('html2pdf.js')
+      .then(module => {
+        setHtml2pdfInstance(() => module.default); // module.default is the actual html2pdf function
+        setIsPdfLibReady(true);
+        console.log("DashboardClientContent: html2pdf.js loaded successfully and stored in state.");
+      })
+      .catch(err => {
+        console.error("DashboardClientContent: Failed to load html2pdf.js", err);
+        if (typeof setPrintHandler === 'function') {
+          setPrintHandler(null); // Ensure button is disabled if library fails to load
+        }
+      });
+  // setPrintHandler is stable, only run this effect once on mount basically
+  // or if setPrintHandler itself were to change, which is unlikely.
+  }, [setPrintHandler]);
+
+  // Effect to set the print handler once html2pdf.js is loaded AND reportContentRef is available
+  React.useEffect(() => {
+    console.log(
+      "DashboardClientContent: Print handler setup effect. isPdfLibReady:", isPdfLibReady,
+      "html2pdfInstance available:", !!html2pdfInstance,
+      "reportContentRef.current available:", !!reportContentRef.current,
+      "typeof setPrintHandler:", typeof setPrintHandler
+    );
 
     if (typeof setPrintHandler === 'function') {
-      // Dynamically import html2pdf.js only on the client-side
-      import('html2pdf.js').then(html2pdfModule => {
-        const html2pdf = html2pdfModule.default;
-
-        if (reportContentRef.current && html2pdf) {
-          console.log("DashboardClientContent: html2pdf.js loaded and reportContentRef IS available.");
-          const handleGeneratePdf = async () => {
-            console.log("DashboardClientContent: Attempting to generate PDF with html2pdf.js. reportContentRef exists:", !!reportContentRef.current);
-            
-            if (reportContentRef.current) {
-              const element = reportContentRef.current;
-              const timestamp = format(new Date(), 'yyyyMMdd_HHmmss');
-              const filename = `BreatheEasy_Report_${timestamp}.pdf`;
+      if (isPdfLibReady && html2pdfInstance && reportContentRef.current) {
+        console.log("DashboardClientContent: Conditions met - html2pdf.js is loaded AND reportContentRef IS available.");
+        
+        const handleGeneratePdf = async () => {
+          console.log("DashboardClientContent: Attempting to generate PDF with html2pdf.js. reportContentRef exists:", !!reportContentRef.current);
               
-              console.log("DashboardClientContent: Element to print:", element);
+          if (reportContentRef.current && html2pdfInstance) {
+            const element = reportContentRef.current;
+            const timestamp = format(new Date(), 'yyyyMMdd_HHmmss');
+            const filename = `BreatheEasy_Report_${timestamp}.pdf`;
+            
+            console.log("DashboardClientContent: Element to print:", element);
 
-              const opt = {
-                margin:       0.5, // inches
-                filename:     filename,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true, logging: false, letterRendering: true, width: element.scrollWidth, height: element.scrollHeight },
-                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
-                pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
-              };
+            const opt = {
+              margin:       0.5, // inches
+              filename:     filename,
+              image:        { type: 'jpeg', quality: 0.98 },
+              html2canvas:  { scale: 2, useCORS: true, logging: false, letterRendering: true, width: element.scrollWidth, height: element.scrollHeight },
+              jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
+              pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+            };
 
-              try {
-                await html2pdf().from(element).set(opt).save();
-                console.log("DashboardClientContent: PDF generation and download initiated.");
-              } catch (pdfError) {
-                console.error("DashboardClientContent: html2pdf.js error:", pdfError);
-                alert(t('pdfGenerationErrorGeneric') || "An error occurred while generating the PDF.");
-              }
-            } else {
-              console.error('DashboardClientContent: Printable report content ref is not available at time of PDF generation.');
-              alert(t('reportContentMissingError') || 'Error: Report content not found. Cannot generate PDF.');
+            try {
+              // html2pdfInstance is the function itself
+              await html2pdfInstance().from(element).set(opt).save();
+              console.log("DashboardClientContent: PDF generation and download initiated.");
+            } catch (pdfError) {
+              console.error("DashboardClientContent: html2pdf.js error:", pdfError);
+              alert(t('pdfGenerationErrorGeneric') || "An error occurred while generating the PDF.");
             }
-          };
-          
-          setPrintHandler(handleGeneratePdf);
-          console.log("DashboardClientContent: PDF generation handler (using html2pdf.js) has been SET.");
-        } else {
-            console.warn("DashboardClientContent: html2pdf.js loaded but reportContentRef is NOT available YET. Print handler not set. This may happen if child hasn't rendered ref yet. If this persists, check PrintableReport ref forwarding.");
-            setPrintHandler(null);
-        }
-      }).catch(err => {
-        console.error("DashboardClientContent: Failed to load html2pdf.js", err);
-        setPrintHandler(null);
-      });
-      
+          } else {
+            console.error('DashboardClientContent: Printable report content ref or html2pdfInstance is not available at time of PDF generation.');
+            alert(t('reportContentMissingError') || 'Error: Report content or PDF library not found. Cannot generate PDF.');
+          }
+        };
+        
+        setPrintHandler(handleGeneratePdf);
+        console.log("DashboardClientContent: PDF generation handler (using html2pdf.js) has been SET.");
+      } else {
+        console.warn("DashboardClientContent: Conditions NOT met for setting print handler. isPdfLibReady:", isPdfLibReady, "hasRef:", !!reportContentRef.current, "hasInstance:",!!html2pdfInstance, ". Print handler not set (or reset).");
+        setPrintHandler(null); // Set to null if not all conditions are met
+      }
+
       return () => {
         if (typeof setPrintHandler === 'function') {
-            setPrintHandler(null);
-            console.log("DashboardClientContent: PDF generation handler has been UNSET (cleanup).");
+          setPrintHandler(null);
+          console.log("DashboardClientContent: PDF generation handler has been UNSET (cleanup for print handler setup effect).");
         }
       };
-    } else {
-      console.warn("DashboardClientContent: setPrintHandler prop is not a function. Print functionality will be disabled.");
     }
-  // Dependencies: setPrintHandler (stable callback from layout), t (for translations in error messages), lng (if translations depend on it).
-  // reportContentRef.current is NOT a valid dependency for useEffect as its changes don't trigger re-renders.
-  // The check for reportContentRef.current is done inside the dynamic import's .then() block.
-  }, [setPrintHandler, t, lng]); 
+  // This effect depends on the PDF library being ready, the instance being available,
+  // and contextual things like setPrintHandler, t, lng.
+  // It will re-run if isPdfLibReady or html2pdfInstance changes.
+  // The check for reportContentRef.current happens inside.
+  }, [isPdfLibReady, html2pdfInstance, setPrintHandler, t, lng]); 
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-6 lg:p-8">
@@ -222,8 +245,13 @@ export default function DashboardClientContent({
       </Suspense>
       
       {/* This div is positioned off-screen and used by html2pdf.js to generate the report */}
-      <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', width: '8.5in', backgroundColor: 'white', color: '#333' }}>
-        <PrintableReport ref={reportContentRef} airQualityData={MOCK_AIR_QUALITY_DATA} aiAnalysis={aiAnalysisForReport} lng={lng} />
+      <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', width: '8.5in', backgroundColor: 'white', color: '#333' }} id="pdf-render-source-container">
+        <PrintableReport 
+            ref={reportContentRef} 
+            airQualityData={MOCK_AIR_QUALITY_DATA} 
+            aiAnalysis={aiAnalysisForReport} 
+            lng={lng} 
+        />
       </div>
     </div>
   );
