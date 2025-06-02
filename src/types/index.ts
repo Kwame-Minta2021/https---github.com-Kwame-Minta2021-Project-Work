@@ -14,7 +14,7 @@ export interface SensorReading {
   name: string;
   value: number;
   unit: string;
-  icon?: LucideIcon;
+  iconName?: string; // Changed from icon?: LucideIcon
   description?: string;
   color?: string; // Optional base color for charts or UI elements
   thresholds?: SensorReadingThresholds; // Thresholds for color coding
@@ -50,3 +50,4 @@ export interface CustomAlertSettings {
 // Export types for new flows
 export type { GenerateLocalityReportInput, GenerateLocalityReportOutput };
 export type { ForecastAirQualityInput, ForecastAirQualityOutput };
+

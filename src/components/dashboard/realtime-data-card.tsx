@@ -2,13 +2,25 @@
 import type { SensorReading } from '@/types';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { cn } from '@/lib/utils';
+import { Thermometer, Wind, Cloud, Factory, FlaskConical, Flame, Layers, type LucideIcon } from 'lucide-react';
 
 interface RealtimeDataCardProps {
   reading: SensorReading;
 }
 
+// Map string names to actual Lucide components
+const iconMap: { [key: string]: LucideIcon } = {
+  Thermometer,
+  Wind,
+  Cloud,
+  Factory,
+  FlaskConical,
+  Flame,
+  Layers,
+};
+
 export default function RealtimeDataCard({ reading }: RealtimeDataCardProps) {
-  const IconComponent = reading.icon;
+  const IconComponent = reading.iconName ? iconMap[reading.iconName] : null;
 
   const getValueColorClass = () => {
     if (!reading.thresholds) {
@@ -34,7 +46,7 @@ export default function RealtimeDataCard({ reading }: RealtimeDataCardProps) {
         {IconComponent && <IconComponent className="h-5 w-5 text-muted-foreground" style={{color: reading.color}} />}
       </CardHeader>
       <CardContent>
-        <div 
+        <div
           className={cn("text-3xl font-bold", getValueColorClass())}
           style={valueStyle}
         >

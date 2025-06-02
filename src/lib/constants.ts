@@ -1,6 +1,6 @@
 
 import type { AirQualityData, HistoricalDataPoint, SensorReadingThresholds } from '@/types';
-import { Thermometer, Wind, Cloud, Factory, FlaskConical, Flame, Layers } from 'lucide-react';
+// Removed direct LucideIcon imports as they are handled in RealtimeDataCard
 import { subDays, formatISO, startOfHour, setHours, parseISO, eachDayOfInterval, format } from 'date-fns';
 
 // Define a single, fixed reference date for all mock data to ensure consistency
@@ -17,26 +17,26 @@ const PM10_THRESHOLDS: SensorReadingThresholds = { moderate: 50, unhealthy: 101 
 
 
 export const MOCK_AIR_QUALITY_DATA: AirQualityData = {
-  co: { id: 'co', name: 'CO (MQ-9)', value: 0.58, unit: 'ppm', icon: Flame, color: "hsl(var(--chart-1))", thresholds: CO_THRESHOLDS },
-  vocs: { id: 'vocs', name: 'VOCs (MQ-135)', value: 1.07, unit: 'ppm', icon: FlaskConical, color: "hsl(var(--chart-2))", thresholds: VOC_THRESHOLDS },
-  ch4Lpg: { id: 'ch4Lpg', name: 'CH4/LPG (MQ-5)', value: 300, unit: 'ppm', icon: Factory, color: "hsl(var(--chart-3))", thresholds: CH4LPG_THRESHOLDS },
-  pm1_0: { id: 'pm1_0', name: 'PM1.0', value: 15, unit: 'µg/m³', icon: Layers, color: "hsl(var(--chart-4))", thresholds: PM1_0_THRESHOLDS },
-  pm2_5: { id: 'pm2_5', name: 'PM2.5', value: 40, unit: 'µg/m³', icon: Cloud, color: "hsl(var(--chart-5))", thresholds: PM2_5_THRESHOLDS },
-  pm10: { id: 'pm10', name: 'PM10', value: 55, unit: 'µg/m³', icon: Wind, color: "hsl(var(--chart-1))", thresholds: PM10_THRESHOLDS }, // Re-using chart color
-  timestamp: FIXED_REFERENCE_DATE, 
+  co: { id: 'co', name: 'CO (MQ-9)', value: 0.58, unit: 'ppm', iconName: 'Flame', color: "hsl(var(--chart-1))", thresholds: CO_THRESHOLDS },
+  vocs: { id: 'vocs', name: 'VOCs (MQ-135)', value: 1.07, unit: 'ppm', iconName: 'FlaskConical', color: "hsl(var(--chart-2))", thresholds: VOC_THRESHOLDS },
+  ch4Lpg: { id: 'ch4Lpg', name: 'CH4/LPG (MQ-5)', value: 300, unit: 'ppm', iconName: 'Factory', color: "hsl(var(--chart-3))", thresholds: CH4LPG_THRESHOLDS },
+  pm1_0: { id: 'pm1_0', name: 'PM1.0', value: 15, unit: 'µg/m³', iconName: 'Layers', color: "hsl(var(--chart-4))", thresholds: PM1_0_THRESHOLDS },
+  pm2_5: { id: 'pm2_5', name: 'PM2.5', value: 40, unit: 'µg/m³', iconName: 'Cloud', color: "hsl(var(--chart-5))", thresholds: PM2_5_THRESHOLDS },
+  pm10: { id: 'pm10', name: 'PM10', value: 55, unit: 'µg/m³', iconName: 'Wind', color: "hsl(var(--chart-1))", thresholds: PM10_THRESHOLDS }, // Re-using chart color
+  timestamp: FIXED_REFERENCE_DATE,
 };
 
 const generateHistoricalData = (): HistoricalDataPoint[] => {
   const data: HistoricalDataPoint[] = [];
-  const baseDate = FIXED_REFERENCE_DATE; 
+  const baseDate = FIXED_REFERENCE_DATE;
 
-  for (let dayOffset = 0; dayOffset < 30; dayOffset++) { 
+  for (let dayOffset = 0; dayOffset < 30; dayOffset++) {
     const currentDateAtMidnight = startOfHour(subDays(baseDate, dayOffset));
     const currentDayBase = new Date(currentDateAtMidnight.getFullYear(), currentDateAtMidnight.getMonth(), currentDateAtMidnight.getDate());
 
-    for (let hour = 0; hour < 24; hour++) { 
+    for (let hour = 0; hour < 24; hour++) {
       const timestamp = setHours(currentDayBase, hour);
-      
+
       // Deterministic generation
       const sinHour = Math.sin(hour / 4 + dayOffset / 2);
       const cosHour = Math.cos(hour / 3 + dayOffset / 3);
@@ -49,7 +49,7 @@ const generateHistoricalData = (): HistoricalDataPoint[] => {
       });
     }
   }
-  return data.sort((a, b) => parseISO(a.timestamp).getTime() - parseISO(b.timestamp).getTime()); 
+  return data.sort((a, b) => parseISO(a.timestamp).getTime() - parseISO(b.timestamp).getTime());
 };
 
 export const MOCK_HISTORICAL_DATA: HistoricalDataPoint[] = generateHistoricalData();
@@ -71,7 +71,8 @@ export const CHART_CONFIG = {
   pm1_0: { label: "PM1.0 (µg/m³)", color: MOCK_AIR_QUALITY_DATA.pm1_0.color },
   pm2_5: { label: "PM2.5 (µg/m³)", color: MOCK_AIR_QUALITY_DATA.pm2_5.color },
   pm10: { label: "PM10 (µg/m³)", color: MOCK_AIR_QUALITY_DATA.pm10.color },
-  CO: { label: "CO (ppm)", color: MOCK_AIR_QUALITY_DATA.co.color }, 
-  VOCs: { label: "VOCs (ppm)", color: MOCK_AIR_QUALITY_DATA.vocs.color }, 
+  CO: { label: "CO (ppm)", color: MOCK_AIR_QUALITY_DATA.co.color },
+  VOCs: { label: "VOCs (ppm)", color: MOCK_AIR_QUALITY_DATA.vocs.color },
   PM25: { label: "PM2.5 (µg/m³)", color: MOCK_AIR_QUALITY_DATA.pm2_5.color },
 } as const;
+
