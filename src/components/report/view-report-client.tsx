@@ -2,11 +2,10 @@
 // src/components/report/view-report-client.tsx
 "use client";
 
-import React from 'react';
-import Image from 'next/image';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import React, { useEffect, useRef, useState } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import RealtimeDataCard from '@/components/dashboard/realtime-data-card';
-import { Brain, MapPin, AlertCircle, CheckCircle2, CalendarDays, Thermometer } from 'lucide-react';
+import { Brain, MapPin, AlertCircle, CheckCircle2, CalendarDays, Thermometer, Video, AlertTriangle, Loader2 } from 'lucide-react';
 import type { AirQualityData } from '@/types';
 import type { AnalyzeAirQualityOutput } from '@/ai/flows/analyze-air-quality';
 import type { GenerateLocalityReportOutput } from '@/ai/flows/generate-locality-report-flow';
@@ -18,10 +17,10 @@ interface ViewReportClientProps {
   aiAnalysis: AnalyzeAirQualityOutput | null;
   localityReport: GenerateLocalityReportOutput | null;
   weeklyForecast: ForecastAirQualityOutput | null;
-  lng: string; // For potential client-side translations if needed, though primarily using passed translations
+  lng: string;
   translations: {
     pageTitle: string;
-    mapPlaceholderText: string;
+    mapPlaceholderText: string; // Will be replaced by aerial view title
     currentSensorReadingsTitle: string;
     aiAnalyzerTitle: string;
     rlModelAnalysisTitle: string;
@@ -34,7 +33,22 @@ interface ViewReportClientProps {
     reportNoHealthImpactData: string;
     reportNoRecommendationsData: string;
     localityReportNotAvailable: string;
+    aerialViewMapTitle: string;
+    aerialViewLoading: string;
+    aerialViewProcessing: string;
+    aerialViewNotFound: string;
+    aerialViewPlayPauseHint: string;
+    aerialViewError: string;
   };
+}
+
+// Default address for the aerial view demo
+const AERIAL_VIEW_ADDRESS = '1600 Amphitheatre Parkway, Mountain View, CA 94043';
+const API_KEY = process.env.NEXT_PUBLIC_GOOGLE_API_KEY;
+
+function videoIdOrAddress(value: string) {
+  const videoIdRegex = /[0-9a-zA-Z-_]{22}/;
+  return value.match(videoIdRegex) ? 'videoId' : 'address';
 }
 
 export default function ViewReportClient({
@@ -54,33 +68,109 @@ export default function ViewReportClient({
     currentReadings.pm10,
   ];
 
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [videoSrc, setVideoSrc] = useState<string | null>(null);
+  const [videoMessage, setVideoMessage] = useState<string>(translations.aerialViewLoading);
+  const [videoStatusIcon, setVideoStatusIcon] = useState<React.ReactNode>(<Loader2 className="h-6 w-6 animate-spin text-primary" />);
+
+
+  useEffect(() => {
+    const initAerialView = async () => {
+      if (!API_KEY) {
+        setVideoMessage("API Key is missing. Cannot load Aerial View.");
+        setVideoStatusIcon(<AlertTriangle className="h-6 w-6 text-destructive" />);
+        console.error("Aerial View API Key is not configured.");
+        return;
+      }
+
+      const parameterKey = videoIdOrAddress(AERIAL_VIEW_ADDRESS);
+      const urlParameter = new URLSearchParams();
+      urlParameter.set(parameterKey, AERIAL_VIEW_ADDRESS);
+      urlParameter.set('key', API_KEY);
+
+      try {
+        const response = await fetch(`https://aerialview.googleapis.com/v1/videos:lookupVideo?${urlParameter.toString()}`);
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          console.error("Aerial View API error response:", response.status, errorData);
+          setVideoMessage(translations.aerialViewError + ` (Status: ${response.status})`);
+          setVideoStatusIcon(<AlertTriangle className="h-6 w-6 text-destructive" />);
+          return;
+        }
+        const videoResult = await response.json();
+
+        if (videoResult.state === 'PROCESSING') {
+          setVideoMessage(translations.aerialViewProcessing);
+          setVideoStatusIcon(<Loader2 className="h-6 w-6 animate-spin text-amber-500" />);
+        } else if (videoResult.error && videoResult.error.code === 404) {
+          setVideoMessage(translations.aerialViewNotFound);
+          setVideoStatusIcon(<AlertTriangle className="h-6 w-6 text-destructive" />);
+        } else if (videoResult.uris && videoResult.uris.MP4_MEDIUM && videoResult.uris.MP4_MEDIUM.landscapeUri) {
+          setVideoSrc(videoResult.uris.MP4_MEDIUM.landscapeUri);
+          setVideoMessage(""); // Clear message if video loads
+          setVideoStatusIcon(null); // Clear icon
+        } else {
+          console.error("Aerial View API unexpected response:", videoResult);
+          setVideoMessage(translations.aerialViewError);
+          setVideoStatusIcon(<AlertTriangle className="h-6 w-6 text-destructive" />);
+        }
+      } catch (error) {
+        console.error("Failed to fetch Aerial View video:", error);
+        setVideoMessage(translations.aerialViewError);
+        setVideoStatusIcon(<AlertTriangle className="h-6 w-6 text-destructive" />);
+      }
+    };
+
+    initAerialView();
+  }, [translations]);
+
+  const handleVideoClick = () => {
+    if (videoRef.current) {
+      if (videoRef.current.paused) {
+        videoRef.current.play();
+      } else {
+        videoRef.current.pause();
+      }
+    }
+  };
+
   return (
     <div className="flex-1 space-y-8 p-4 md:p-6 lg:p-8">
       <header className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">{translations.pageTitle}</h1>
       </header>
 
-      {/* Map Placeholder Section */}
+      {/* Aerial View Section */}
       <section id="map-location" className="scroll-mt-20">
         <Card className="shadow-lg overflow-hidden">
           <CardHeader>
             <CardTitle className="flex items-center">
               <MapPin className="h-6 w-6 mr-2 text-primary" />
-              Current Location
+              {translations.aerialViewMapTitle}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="aspect-video bg-muted flex items-center justify-center">
-              <Image
-                src="https://placehold.co/800x450.png/EBF4FF/2C5282?text=Map+Placeholder"
-                alt={translations.mapPlaceholderText}
-                width={800}
-                height={450}
-                className="object-cover w-full h-full"
-                data-ai-hint="world map"
-              />
+            <div className="aspect-video bg-muted flex items-center justify-center relative">
+              {videoSrc ? (
+                <video
+                  ref={videoRef}
+                  src={videoSrc}
+                  onClick={handleVideoClick}
+                  className="w-full h-full object-cover cursor-pointer"
+                  controls={false}
+                  loop
+                  autoPlay
+                  muted // Autoplay often requires muted
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center text-center p-4">
+                  {videoStatusIcon}
+                  <p className="mt-2 text-sm text-muted-foreground">{videoMessage}</p>
+                </div>
+              )}
             </div>
-            <p className="p-4 text-sm text-muted-foreground">{translations.mapPlaceholderText} Further development needed for live map integration.</p>
+            {videoSrc && <p className="p-4 text-xs text-muted-foreground text-center">{translations.aerialViewPlayPauseHint} (Demo address: {AERIAL_VIEW_ADDRESS})</p>}
+             {!videoSrc && videoMessage !== translations.aerialViewLoading && <p className="p-4 text-xs text-muted-foreground text-center">(Demo address: {AERIAL_VIEW_ADDRESS})</p>}
           </CardContent>
         </Card>
       </section>
@@ -199,4 +289,3 @@ export default function ViewReportClient({
     </div>
   );
 }
-

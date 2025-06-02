@@ -127,5 +127,11 @@
   "localityReportTitle": "Locality-Specific Air Quality Advice",
   "airQualityForecastTitle": "Weekly Air Quality Forecast",
   "fetchingForecast": "Fetching air quality forecast...",
-  "forecastNotAvailable": "Air quality forecast is currently unavailable."
+  "forecastNotAvailable": "Air quality forecast is currently unavailable.",
+  "aerialViewMapTitle": "Aerial View of Location",
+  "aerialViewLoading": "Loading Aerial View...",
+  "aerialViewProcessing": "Aerial View video is processing. Please check back shortly.",
+  "aerialViewNotFound": "Aerial View video not found for the specified address.",
+  "aerialViewPlayPauseHint": "Click video to play/pause.",
+  "aerialViewError": "Could not load Aerial View. Please check console for details."
 }
