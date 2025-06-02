@@ -65,8 +65,38 @@ const generateLocalityReportFlow = ai.defineFlow(
     outputSchema: GenerateLocalityReportOutputSchema,
   },
   async (input) => {
-    const {output} = await localityReportPrompt(input);
-    return output!;
+    const MAX_ATTEMPTS = 5; // 1 initial + 4 retries
+    let attempts = 0;
+    let lastError: any = null;
+
+    while (attempts < MAX_ATTEMPTS) {
+      try {
+        const {output} = await localityReportPrompt(input);
+        return output!;
+      } catch (error: any) {
+        attempts++;
+        lastError = error;
+        const errorMessage = typeof error.message === 'string' ? error.message.toLowerCase() : '';
+        const isRetriableError = errorMessage.includes('503') || errorMessage.includes('overloaded') || errorMessage.includes('service unavailable');
+
+        if (isRetriableError && attempts < MAX_ATTEMPTS) {
+          const delay = 1000 * Math.pow(2, attempts -1); // Exponential backoff: 1s, 2s, 4s, 8s
+          console.warn(`generateLocalityReportFlow attempt ${attempts} (max ${MAX_ATTEMPTS}) for prompt '${localityReportPrompt.name}' failed due to model overload. Retrying in ${delay / 1000}s...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        } else {
+          console.error(`generateLocalityReportFlow failed for prompt '${localityReportPrompt.name}' after ${attempts} attempt(s). Last error:`, lastError);
+          throw lastError;
+        }
+      }
+    }
+    // This should only be reached if MAX_ATTEMPTS is 0 or loop logic is flawed,
+    // but as a fallback, rethrow the last known error.
+    if (lastError) {
+        console.error(`generateLocalityReportFlow ultimately failed for prompt '${localityReportPrompt.name}' after ${attempts} attempts. Last error:`, lastError);
+        throw lastError;
+    }
+    // Should not happen if MAX_ATTEMPTS > 0
+    throw new Error(`generateLocalityReportFlow failed for prompt '${localityReportPrompt.name}' after max retries without a specific caught error.`);
   }
 );
 
