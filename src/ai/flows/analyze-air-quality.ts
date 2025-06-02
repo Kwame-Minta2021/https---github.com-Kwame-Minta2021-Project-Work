@@ -61,6 +61,26 @@ Based on this data, provide:
 1.  Effect on Human Health: (Plain text, in {{language}}, no markdown)
 2.  Best Action to Reduce Presence: (Plain text, in {{language}}, no markdown, including precautionary measures and advice on reducing pollutant concentrations)
 `,
+  config: {
+    safetySettings: [
+      {
+        category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
+        threshold: 'BLOCK_ONLY_HIGH',
+      },
+      {
+        category: 'HARM_CATEGORY_HATE_SPEECH',
+        threshold: 'BLOCK_MEDIUM_AND_ABOVE',
+      },
+      {
+        category: 'HARM_CATEGORY_HARASSMENT',
+        threshold: 'BLOCK_MEDIUM_AND_ABOVE',
+      },
+      {
+        category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
+        threshold: 'BLOCK_MEDIUM_AND_ABOVE',
+      },
+    ],
+  },
 });
 
 const analyzeAirQualityFlow = ai.defineFlow(
@@ -85,23 +105,22 @@ const analyzeAirQualityFlow = ai.defineFlow(
         const isRetriableError = errorMessage.includes('503') || errorMessage.includes('overloaded') || errorMessage.includes('service unavailable');
 
         if (isRetriableError && attempts < MAX_ATTEMPTS) {
-          // Adjusted delay: 1s, 3s, 4s, 6s, 7s for subsequent retries
           const delay = 1000 * (attempts + Math.floor(attempts / 2)); 
-          console.warn(`analyzeAirQualityFlow attempt ${attempts} (max ${MAX_ATTEMPTS}) failed due to model overload. Retrying in ${delay / 1000}s...`);
+          console.warn(`analyzeAirQualityFlow attempt ${attempts} of ${MAX_ATTEMPTS} failed due to model overload for prompt '${analyzeAirQualityPrompt.name}'. Retrying in ${delay / 1000}s...`);
           await new Promise(resolve => setTimeout(resolve, delay));
         } else {
-          console.error(`analyzeAirQualityFlow failed after ${attempts} attempt(s). Last error:`, lastError);
+          console.error(`analyzeAirQualityFlow failed for prompt '${analyzeAirQualityPrompt.name}' after ${attempts} attempt(s). Last error:`, lastError);
           throw lastError; 
         }
       }
     }
     
     if (lastError) {
-        console.error(`analyzeAirQualityFlow ultimately failed after ${attempts} attempts. Last error:`, lastError);
+        console.error(`analyzeAirQualityFlow ultimately failed for prompt '${analyzeAirQualityPrompt.name}' after ${attempts} attempts. Last error:`, lastError);
         throw lastError;
     }
     
-    throw new Error("analyzeAirQualityFlow failed after max retries. Unknown error during retry loop.");
+    throw new Error(`analyzeAirQualityFlow failed for prompt '${analyzeAirQualityPrompt.name}' after max retries. Unknown error during retry loop.`);
   }
 );
 
