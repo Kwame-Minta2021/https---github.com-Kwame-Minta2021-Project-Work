@@ -1,4 +1,3 @@
-
 // src/app/[lng]/view-report/page.tsx
 import React from 'react';
 import ViewReportClient from '@/components/report/view-report-client';
@@ -87,15 +86,14 @@ export default async function ViewReportPage({ params: { lng } }: ViewReportPage
 
   return (
     <ViewReportClient
-      currentReadings={MOCK_AIR_QUALITY_DATA}
+      currentReadings={MOCK_AIR_QUALITY_DATA} // Still passing MOCK_AIR_QUALITY_DATA for other potential uses or if AI flows depend on its structure
       aiAnalysis={currentAnalysis}
       localityReport={localityReport}
       weeklyForecast={weeklyForecast}
       lng={lng}
       translations={{
         pageTitle: t('viewReportPageTitle'),
-        // mapPlaceholderText: t('mapPlaceholderText'), // Removed
-        currentSensorReadingsTitle: t('reportSensorReadingsTitle'),
+        // currentSensorReadingsTitle: t('reportSensorReadingsTitle'), // Removed
         aiAnalyzerTitle: t('aiAnalyzer'),
         rlModelAnalysisTitle: t('rlModelAnalysis'),
         effectOnHumanHealthTitle: t('effectOnHumanHealth'),
@@ -107,7 +105,6 @@ export default async function ViewReportPage({ params: { lng } }: ViewReportPage
         reportNoHealthImpactData: t('reportNoHealthImpactData'),
         reportNoRecommendationsData: t('reportNoRecommendationsData'),
         localityReportNotAvailable: t('localityReportNotAvailable', "Locality-specific advice is currently unavailable."),
-        // Removed aerial view translations from here as they are no longer passed
       }}
     />
   );

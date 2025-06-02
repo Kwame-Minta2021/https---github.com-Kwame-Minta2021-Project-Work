@@ -73,7 +73,6 @@
   "reportTitle": "Air Quality & Health Report",
   "reportGeneratedOn": "Generated on",
   "reportReadingsTimestamp": "Readings Timestamp",
-  "reportSensorReadingsTitle": "Current Sensor Readings",
   "reportPollutantHeader": "Pollutant",
   "reportValueHeader": "Value",
   "reportUnitHeader": "Unit",
@@ -126,5 +125,6 @@
   "localityReportTitle": "Locality-Specific Air Quality Advice",
   "airQualityForecastTitle": "Weekly Air Quality Forecast",
   "fetchingForecast": "Fetching air quality forecast...",
-  "forecastNotAvailable": "Air quality forecast is currently unavailable."
+  "forecastNotAvailable": "Air quality forecast is currently unavailable.",
+  "localityReportNotAvailable": "Locality-specific advice is currently unavailable."
 }

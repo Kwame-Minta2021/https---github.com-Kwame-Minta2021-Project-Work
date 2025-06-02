@@ -1,27 +1,26 @@
-
 // src/components/report/view-report-client.tsx
 "use client";
 
-import React, { useEffect, useRef, useState } from 'react';
+import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import RealtimeDataCard from '@/components/dashboard/realtime-data-card';
-import { Brain, AlertCircle, CheckCircle2, CalendarDays, Thermometer, Loader2 } from 'lucide-react';
-import type { AirQualityData } from '@/types';
+// RealtimeDataCard is no longer used directly on this page, but kept if other parts of the report might use similar cards.
+// import RealtimeDataCard from '@/components/dashboard/realtime-data-card'; 
+import { Brain, AlertCircle, CheckCircle2, CalendarDays, Thermometer } from 'lucide-react';
+import type { AirQualityData } from '@/types'; // AirQualityData might still be relevant if other parts of the report use it indirectly.
 import type { AnalyzeAirQualityOutput } from '@/ai/flows/analyze-air-quality';
 import type { GenerateLocalityReportOutput } from '@/ai/flows/generate-locality-report-flow';
 import type { ForecastAirQualityOutput } from '@/ai/flows/forecast-air-quality-flow';
 import { Skeleton } from '../ui/skeleton';
 
 interface ViewReportClientProps {
-  currentReadings: AirQualityData;
+  currentReadings: AirQualityData; // Kept for potential future use or if other sections depend on it
   aiAnalysis: AnalyzeAirQualityOutput | null;
   localityReport: GenerateLocalityReportOutput | null;
   weeklyForecast: ForecastAirQualityOutput | null;
   lng: string;
   translations: {
     pageTitle: string;
-    // mapPlaceholderText: string; // Removed as map is removed
-    currentSensorReadingsTitle: string;
+    // currentSensorReadingsTitle: string; // Removed
     aiAnalyzerTitle: string;
     rlModelAnalysisTitle: string;
     effectOnHumanHealthTitle: string;
@@ -33,26 +32,19 @@ interface ViewReportClientProps {
     reportNoHealthImpactData: string;
     reportNoRecommendationsData: string;
     localityReportNotAvailable: string;
-    // Removed aerial view translations
   };
 }
 
 export default function ViewReportClient({
-  currentReadings,
+  currentReadings, // Data still passed but not directly rendered in a grid here
   aiAnalysis,
   localityReport,
   weeklyForecast,
   lng,
   translations,
 }: ViewReportClientProps) {
-  const sensorReadingsArray = [
-    currentReadings.co,
-    currentReadings.vocs,
-    currentReadings.ch4Lpg,
-    currentReadings.pm1_0,
-    currentReadings.pm2_5,
-    currentReadings.pm10,
-  ];
+
+  // The sensorReadingsArray and the section rendering them have been removed.
 
   return (
     <div className="flex-1 space-y-8 p-4 md:p-6 lg:p-8">
@@ -60,7 +52,7 @@ export default function ViewReportClient({
         <h1 className="text-3xl font-bold tracking-tight">{translations.pageTitle}</h1>
       </header>
 
-      {/* Current Readings Section */}
+      {/* Current Readings Section - REMOVED
       <section id="current-readings" className="scroll-mt-20">
         <h2 className="text-2xl font-semibold tracking-tight mb-4">{translations.currentSensorReadingsTitle}</h2>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
@@ -69,6 +61,7 @@ export default function ViewReportClient({
           ))}
         </div>
       </section>
+      */}
 
       {/* AI Analysis Section */}
       <section id="ai-analysis" className="scroll-mt-20">

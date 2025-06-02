@@ -73,7 +73,6 @@
   "reportTitle": "Rapport sur la Qualité de l'Air et la Santé",
   "reportGeneratedOn": "Généré le",
   "reportReadingsTimestamp": "Horodatage des lectures",
-  "reportSensorReadingsTitle": "Relevés Actuels des Capteurs",
   "reportPollutantHeader": "Polluant",
   "reportValueHeader": "Valeur",
   "reportUnitHeader": "Unité",
@@ -126,5 +125,6 @@
   "localityReportTitle": "Conseils sur la Qualité de l'Air Spécifiques à la Localité",
   "airQualityForecastTitle": "Prévisions Hebdomadaires de la Qualité de l'Air",
   "fetchingForecast": "Récupération des prévisions de qualité de l'air...",
-  "forecastNotAvailable": "Les prévisions de qualité de l'air sont actuellement indisponibles."
+  "forecastNotAvailable": "Les prévisions de qualité de l'air sont actuellement indisponibles.",
+  "localityReportNotAvailable": "Les conseils spécifiques à la localité sont actuellement indisponibles."
 }
