@@ -54,6 +54,7 @@ export default function ViewReportClient({
   const [reportGeneratedTimestamp, setReportGeneratedTimestamp] = useState<string | null>(null);
 
   useEffect(() => {
+    // This effect runs only on the client after hydration
     setReportGeneratedTimestamp(
       format(new Date(), 'PPpp', { locale: lng === 'fr' ? fr : enUS })
     );
@@ -77,6 +78,7 @@ export default function ViewReportClient({
     });
 
     try {
+      // Dynamically import html2pdf.js only on the client-side
       const html2pdf = (await import('html2pdf.js')).default;
 
       const currentDate = format(new Date(), 'yyyy-MM-dd_HH-mm');
@@ -114,11 +116,11 @@ export default function ViewReportClient({
     <div className="flex-1 space-y-8 p-4 md:p-6 lg:p-8">
       <header className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-3">
-          <Link href={`/${lng}/dashboard`} passHref>
-            <Button variant="outline" size="icon" aria-label={translations.backToDashboard}>
+          <Button asChild variant="outline" size="icon" aria-label={translations.backToDashboard}>
+            <Link href={`/${lng}/dashboard`}>
               <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </Link>
+            </Link>
+          </Button>
           <div>
             <h1 className="text-3xl font-bold tracking-tight">{translations.pageTitle}</h1>
             <p className="text-sm text-muted-foreground">
