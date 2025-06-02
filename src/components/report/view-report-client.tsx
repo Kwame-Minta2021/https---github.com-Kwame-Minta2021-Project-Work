@@ -1,7 +1,7 @@
 // src/components/report/view-report-client.tsx
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -12,7 +12,6 @@ import type { GenerateLocalityReportOutput } from '@/ai/flows/generate-locality-
 import type { ForecastAirQualityOutput } from '@/ai/flows/forecast-air-quality-flow';
 import { Skeleton } from '../ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-// Removed static import: import html2pdf from 'html2pdf.js';
 import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale'; // Import locales directly
 
@@ -52,6 +51,13 @@ export default function ViewReportClient({
 }: ViewReportClientProps) {
   const { toast } = useToast();
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const [reportGeneratedTimestamp, setReportGeneratedTimestamp] = useState<string | null>(null);
+
+  useEffect(() => {
+    setReportGeneratedTimestamp(
+      format(new Date(), 'PPpp', { locale: lng === 'fr' ? fr : enUS })
+    );
+  }, [lng]); // Re-run if lng changes, though unlikely on this page
 
   const handleDownloadPdf = async () => {
     const element = document.getElementById('report-content-area');
@@ -116,7 +122,7 @@ export default function ViewReportClient({
           <div>
             <h1 className="text-3xl font-bold tracking-tight">{translations.pageTitle}</h1>
             <p className="text-sm text-muted-foreground">
-              {translations.reportGeneratedOn} {format(new Date(), 'PPpp', { locale: lng === 'fr' ? fr : enUS })}
+              {translations.reportGeneratedOn} {reportGeneratedTimestamp || '...'}
             </p>
           </div>
         </div>
@@ -236,3 +242,4 @@ export default function ViewReportClient({
     </div>
   );
 }
+
