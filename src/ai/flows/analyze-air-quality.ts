@@ -92,3 +92,4 @@ const analyzeAirQualityFlow = ai.defineFlow(
     throw new Error("analyzeAirQualityFlow failed after max retries and did not correctly throw the last error.");
   }
 );
+
