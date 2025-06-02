@@ -73,13 +73,15 @@ const sendSmsReportFlow = ai.defineFlow(
     
     let smsMessage = "";
     if (language === 'fr') {
-      smsMessage = `Rapport Air ${formattedDate}: CO ${currentReadings.co.toFixed(1)}ppm, VOC ${currentReadings.vocs.toFixed(1)}ppm, PM2.5 ${currentReadings.pm2_5.toFixed(0)}µg/m³. Santé: ${aiAnalysis.effectOnHumanHealth}. Action: ${aiAnalysis.bestActionToReducePresence}.`;
+      smsMessage = `Rapport Air ${formattedDate}: CO ${currentReadings.co.toFixed(1)}ppm, VOC ${currentReadings.vocs.toFixed(1)}ppm, PM2.5 ${currentReadings.pm2_5.toFixed(0)}µg/m³, PM10 ${currentReadings.pm10.toFixed(0)}µg/m³. Santé: ${aiAnalysis.effectOnHumanHealth}. Action: ${aiAnalysis.bestActionToReducePresence}.`;
     } else { // Default to English
-      smsMessage = `Air Report ${formattedDate}: CO ${currentReadings.co.toFixed(1)}ppm, VOCs ${currentReadings.vocs.toFixed(1)}ppm, PM2.5 ${currentReadings.pm2_5.toFixed(0)}µg/m³. Health: ${aiAnalysis.effectOnHumanHealth}. Action: ${aiAnalysis.bestActionToReducePresence}.`;
+      smsMessage = `Air Report ${formattedDate}: CO ${currentReadings.co.toFixed(1)}ppm, VOCs ${currentReadings.vocs.toFixed(1)}ppm, PM2.5 ${currentReadings.pm2_5.toFixed(0)}µg/m³, PM10 ${currentReadings.pm10.toFixed(0)}µg/m³. Health: ${aiAnalysis.effectOnHumanHealth}. Action: ${aiAnalysis.bestActionToReducePresence}.`;
     }
 
-    if (smsMessage.length > 160) {
-        smsMessage = smsMessage.substring(0, 157) + "...";
+    // Standard SMS limit is 160 characters. Truncate if longer.
+    const MAX_SMS_LENGTH = 160;
+    if (smsMessage.length > MAX_SMS_LENGTH) {
+        smsMessage = smsMessage.substring(0, MAX_SMS_LENGTH - 3) + "...";
     }
 
     const twilioApiUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`;
