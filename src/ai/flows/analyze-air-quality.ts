@@ -25,7 +25,7 @@ export type AnalyzeAirQualityInput = z.infer<typeof AnalyzeAirQualityInputSchema
 
 const AnalyzeAirQualityOutputSchema = z.object({
   effectOnHumanHealth: z.string().describe('A concise, user-friendly statement detailing the health implications of the detected air quality levels, as if determined by an RL model. This response should be in the language specified in the input.'),
-  bestActionToReducePresence: z.string().describe('Specific, actionable recommendations to improve air quality, identified as the optimal action(s) as if by an RL model. This response should be in the language specified in the input.'),
+  bestActionToReducePresence: z.string().describe('Specific, actionable recommendations to improve air quality, including precautionary measures to take and advice on how to reduce gas concentrations. This response should be in the language specified in the input.'),
 });
 export type AnalyzeAirQualityOutput = z.infer<typeof AnalyzeAirQualityOutputSchema>;
 
@@ -54,7 +54,7 @@ Language for response: {{language}}
 
 Based on this data, provide:
 1.  Effect on Human Health: A concise, user-friendly statement detailing the health implications. (In {{language}})
-2.  Best Action to Reduce Presence: Specific, actionable recommendations to improve air quality. (In {{language}})
+2.  Best Action to Reduce Presence: Specific, actionable recommendations to improve air quality. This should include precautionary measures individuals should take and detailed advice on how to reduce the concentration of the detected pollutants. (In {{language}})
 `,
 });
 
