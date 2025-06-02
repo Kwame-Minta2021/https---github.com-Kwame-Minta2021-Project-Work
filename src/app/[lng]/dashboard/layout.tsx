@@ -92,7 +92,12 @@ export default function DashboardLayout({
 
   const handlePrint = async () => {
     console.log("DashboardLayout: handlePrint triggered. isPrintReady:", isPrintReady, "printRef.current exists:", !!printRef.current, "isGeneratingPdf:", isGeneratingPdf);
-    if (isPrintReady && printRef.current && !isGeneratingPdf) {
+    if (isGeneratingPdf) {
+      console.warn("DashboardLayout: PDF generation is already in progress.");
+      alert(t('pdfGenerationInProgress') || "PDF generation is already in progress. Please wait.");
+      return;
+    }
+    if (isPrintReady && printRef.current) {
       setIsGeneratingPdf(true);
       try {
         await printRef.current();
@@ -108,12 +113,8 @@ export default function DashboardLayout({
         setIsGeneratingPdf(false);
       }
     } else {
-      console.warn("DashboardLayout: Print action called but not ready or already in progress. isPrintReady:", isPrintReady, "printRef.current exists:", !!printRef.current, "isGeneratingPdf:", isGeneratingPdf);
-      if (isGeneratingPdf) {
-        alert(t('pdfGenerationInProgress') || "PDF generation is already in progress. Please wait.");
-      } else if (!isPrintReady || !printRef.current) {
-        alert(t('reportFeatureNotReady') || "Report generation feature is currently unavailable or not fully initialized. Please try again shortly.");
-      }
+      console.warn("DashboardLayout: Print action called but not ready. isPrintReady:", isPrintReady, "printRef.current exists:", !!printRef.current);
+      alert(t('reportFeatureNotReady') || "Report generation feature is currently unavailable or not fully initialized. Please try again shortly.");
     }
   };
   
@@ -281,3 +282,5 @@ export default function DashboardLayout({
     </SidebarProvider>
   );
 }
+
+    

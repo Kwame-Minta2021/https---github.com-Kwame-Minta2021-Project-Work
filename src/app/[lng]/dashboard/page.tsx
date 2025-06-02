@@ -66,3 +66,5 @@ export default async function DashboardPage({ setPrintHandler, params: { lng } }
     </DashboardClientContent>
   );
 }
+
+    

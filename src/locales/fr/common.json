@@ -68,15 +68,15 @@
   "pickDateRange": "Choisir une plage de dates",
   "errorAnalyzingAirQuality": "Erreur lors de l'analyse de la qualité de l'air",
   "errorTryAgain": "Veuillez réessayer plus tard ou vérifier les données des capteurs.",
-  "reportTitle": "Rapport de Qualité de l'Air BreatheEasy",
+  "reportTitle": "Rapport d'Analyse des Gaz",
   "reportGeneratedOn": "Généré le",
   "reportReadingsTimestamp": "Horodatage des lectures",
-  "reportSensorReadingsTitle": "Relevés des capteurs",
+  "reportSensorReadingsTitle": "Relevés des capteurs (Résultats des Gaz)",
   "reportPollutantHeader": "Polluant",
   "reportValueHeader": "Valeur",
   "reportUnitHeader": "Unité",
-  "reportNoHealthImpactData": "Aucune analyse d'impact sur la santé disponible.",
-  "reportNoRecommendationsData": "Aucune recommandation disponible.",
+  "reportNoHealthImpactData": "Aucune analyse d'impact sur la santé disponible (Recommandation IA).",
+  "reportNoRecommendationsData": "Aucune recommandation disponible (Actions à Entreprendre).",
   "reportFooterText": "Tableau de Bord BreatheEasy - Votre partenaire pour des environnements plus sains.",
   "reportToControlUnit": "Rapporter à l'Unité de Contrôle",
   "smsReportStatus": "Statut du Rapport SMS",
@@ -85,7 +85,6 @@
   "errorUnknown": "Une erreur inconnue est survenue.",
   "errorModelOverloadedTitle": "Modèle IA temporairement indisponible",
   "errorModelOverloadedSuggestion": "Le service IA subit actuellement une forte demande ou est temporairement indisponible. Veuillez réessayer dans quelques instants.",
-  "popupBlockerWarning": "Échec de l'ouverture de la fenêtre d'impression. Veuillez désactiver les bloqueurs de popups pour ce site et réessayer.",
   "reportFeatureNotReady": "La fonction de génération de rapports est actuellement indisponible ou pas complètement initialisée. Veuillez réessayer sous peu.",
   "pdfGenerationErrorTitle": "Erreur de génération PDF",
   "pdfGenerationErrorDescription": "Impossible de générer le PDF. Veuillez réessayer.",
@@ -93,3 +92,5 @@
   "reportContentMissingError": "Erreur : Contenu du rapport introuvable ou la bibliothèque PDF a échoué. Impossible de générer le PDF.",
   "pdfGenerationInProgress": "La génération du PDF est déjà en cours. Veuillez patienter."
 }
+
+    

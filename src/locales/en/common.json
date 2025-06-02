@@ -68,15 +68,15 @@
   "pickDateRange": "Pick a date range",
   "errorAnalyzingAirQuality": "Error Analyzing Air Quality",
   "errorTryAgain": "Please try again later or check the sensor data.",
-  "reportTitle": "BreatheEasy Air Quality Report",
+  "reportTitle": "Gas Analysis Report",
   "reportGeneratedOn": "Generated on",
   "reportReadingsTimestamp": "Readings Timestamp",
-  "reportSensorReadingsTitle": "Sensor Readings",
+  "reportSensorReadingsTitle": "Sensor Readings (Gases Results)",
   "reportPollutantHeader": "Pollutant",
   "reportValueHeader": "Value",
   "reportUnitHeader": "Unit",
-  "reportNoHealthImpactData": "No health impact analysis available.",
-  "reportNoRecommendationsData": "No recommendations available.",
+  "reportNoHealthImpactData": "No health impact analysis available (AI Recommendation).",
+  "reportNoRecommendationsData": "No recommendations available (Actions to be Taken).",
   "reportFooterText": "BreatheEasy Dashboard - Your partner in healthier environments.",
   "reportToControlUnit": "Report to Control Unit",
   "smsReportStatus": "SMS Report Status",
@@ -85,7 +85,6 @@
   "errorUnknown": "An unknown error occurred.",
   "errorModelOverloadedTitle": "AI Model Temporarily Unavailable",
   "errorModelOverloadedSuggestion": "The AI service is currently experiencing high demand or is temporarily unavailable. Please try again in a few moments.",
-  "popupBlockerWarning": "Failed to open print window. Please disable popup blockers for this site and try again.",
   "reportFeatureNotReady": "Report generation feature is currently unavailable or not fully initialized. Please try again shortly.",
   "pdfGenerationErrorTitle": "PDF Generation Error",
   "pdfGenerationErrorDescription": "Could not generate PDF. Please try again.",
@@ -93,3 +92,5 @@
   "reportContentMissingError": "Error: Report content not found or PDF library failed. Cannot generate PDF.",
   "pdfGenerationInProgress": "PDF generation is already in progress. Please wait."
 }
+
+    

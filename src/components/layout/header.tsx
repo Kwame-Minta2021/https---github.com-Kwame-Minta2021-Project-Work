@@ -3,15 +3,16 @@
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { FileDown, Bot, MessageSquareShare, Loader2 } from "lucide-react"; 
+// Ensure correct type import for PrintHandler based on its definition in DashboardLayout
 import type { PrintHandler } from '@/app/[lng]/dashboard/layout'; 
 import { useTranslation } from 'react-i18next';
 
 interface HeaderProps {
-  onPrint: PrintHandler;
+  onPrint: PrintHandler; // Ensure this matches: () => Promise<void>
   onToggleChatbot: () => void;
   onSendSmsReport: () => Promise<void>; 
   isSendingSms: boolean; 
-  isGeneratingPdf: boolean; // New prop
+  isGeneratingPdf: boolean; 
   isPrintReady: boolean; 
   lng: string; 
 }
@@ -58,3 +59,5 @@ export function Header({ onPrint, onToggleChatbot, onSendSmsReport, isSendingSms
     </header>
   );
 }
+
+    

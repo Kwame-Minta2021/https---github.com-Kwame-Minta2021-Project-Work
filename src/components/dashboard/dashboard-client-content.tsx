@@ -91,7 +91,6 @@ export default function DashboardClientContent({
         }
       });
     } else {
-      // Default to last 7 days if date range is not fully set
       const defaultStartDate = startOfDay(subDays(new Date(), 6));
       const defaultEndDate = endOfDay(new Date());
        newFilteredData = ALL_MOCK_HISTORICAL_DATA.filter(point => {
@@ -108,67 +107,71 @@ export default function DashboardClientContent({
   }, [date]);
 
   React.useEffect(() => {
-    console.log("DashboardClientContent: useEffect for print handler setup. typeof setPrintHandler:", typeof setPrintHandler, "reportContentRef.current available:", !!reportContentRef.current, "lng:", lng);
+    console.log("DashboardClientContent: Print handler setup effect triggered. typeof setPrintHandler:", typeof setPrintHandler, "lng:", lng);
 
     if (typeof setPrintHandler === 'function') {
-      if (reportContentRef.current) {
-        const handleGeneratePdf = async () => {
-          console.log("DashboardClientContent: Attempting to generate PDF with html2pdf.js. reportContentRef exists:", !!reportContentRef.current);
-          
-          const html2pdfModule = await import('html2pdf.js');
-          const html2pdf = html2pdfModule.default;
+      // Dynamically import html2pdf.js only on the client-side
+      import('html2pdf.js').then(html2pdfModule => {
+        const html2pdf = html2pdfModule.default;
 
-          if (reportContentRef.current && html2pdf) {
-            const element = reportContentRef.current;
-            const timestamp = format(new Date(), 'yyyyMMdd_HHmmss');
-            const filename = `BreatheEasy_Report_${timestamp}.pdf`;
+        if (reportContentRef.current && html2pdf) {
+          console.log("DashboardClientContent: html2pdf.js loaded and reportContentRef IS available.");
+          const handleGeneratePdf = async () => {
+            console.log("DashboardClientContent: Attempting to generate PDF with html2pdf.js. reportContentRef exists:", !!reportContentRef.current);
             
-            console.log("DashboardClientContent: html2pdf.js loaded. Element to print:", element);
+            if (reportContentRef.current) {
+              const element = reportContentRef.current;
+              const timestamp = format(new Date(), 'yyyyMMdd_HHmmss');
+              const filename = `BreatheEasy_Report_${timestamp}.pdf`;
+              
+              console.log("DashboardClientContent: Element to print:", element);
 
-            const opt = {
-              margin:       0.5, // inches
-              filename:     filename,
-              image:        { type: 'jpeg', quality: 0.98 },
-              html2canvas:  { scale: 2, useCORS: true, logging: false, letterRendering: true, width: element.scrollWidth, height: element.scrollHeight },
-              jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
-              pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
-            };
+              const opt = {
+                margin:       0.5, // inches
+                filename:     filename,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, logging: false, letterRendering: true, width: element.scrollWidth, height: element.scrollHeight },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
+                pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+              };
 
-            try {
-              await html2pdf().from(element).set(opt).save();
-              console.log("DashboardClientContent: PDF generation and download initiated.");
-            } catch (pdfError) {
-              console.error("DashboardClientContent: html2pdf.js error:", pdfError);
-              alert(t('pdfGenerationErrorGeneric') || "An error occurred while generating the PDF.");
+              try {
+                await html2pdf().from(element).set(opt).save();
+                console.log("DashboardClientContent: PDF generation and download initiated.");
+              } catch (pdfError) {
+                console.error("DashboardClientContent: html2pdf.js error:", pdfError);
+                alert(t('pdfGenerationErrorGeneric') || "An error occurred while generating the PDF.");
+              }
+            } else {
+              console.error('DashboardClientContent: Printable report content ref is not available at time of PDF generation.');
+              alert(t('reportContentMissingError') || 'Error: Report content not found. Cannot generate PDF.');
             }
-          } else {
-            console.error('DashboardClientContent: Printable report content ref is not available or html2pdf failed to load. reportContentRef:', reportContentRef.current, "html2pdf library:", html2pdf);
-            alert(t('reportContentMissingError') || 'Error: Report content not found or PDF library failed. Cannot generate PDF.');
-          }
-        };
-        
-        setPrintHandler(handleGeneratePdf);
-        console.log("DashboardClientContent: PDF generation handler (using html2pdf.js) has been SET.");
-        
-        return () => {
-          setPrintHandler(null);
-          console.log("DashboardClientContent: PDF generation handler has been UNSET (cleanup).");
-        };
-      } else {
-        console.warn("DashboardClientContent: reportContentRef.current is NOT available YET. Print handler not set. This is normal on initial mount or if child hasn't rendered ref yet.");
-        setPrintHandler(null); 
-      }
+          };
+          
+          setPrintHandler(handleGeneratePdf);
+          console.log("DashboardClientContent: PDF generation handler (using html2pdf.js) has been SET.");
+        } else {
+            console.warn("DashboardClientContent: html2pdf.js loaded but reportContentRef is NOT available YET. Print handler not set. This may happen if child hasn't rendered ref yet. If this persists, check PrintableReport ref forwarding.");
+            setPrintHandler(null);
+        }
+      }).catch(err => {
+        console.error("DashboardClientContent: Failed to load html2pdf.js", err);
+        setPrintHandler(null);
+      });
+      
+      return () => {
+        if (typeof setPrintHandler === 'function') {
+            setPrintHandler(null);
+            console.log("DashboardClientContent: PDF generation handler has been UNSET (cleanup).");
+        }
+      };
     } else {
       console.warn("DashboardClientContent: setPrintHandler prop is not a function. Print functionality will be disabled.");
-      if (typeof setPrintHandler === 'function') { // Defensive check, though covered by outer if
-        setPrintHandler(null);
-      }
     }
-  // Using lng and t in the dependency array for cases where translations might affect the PDF filename or error messages.
-  // setPrintHandler is also a dependency.
-  // We deliberately EXCLUDE aiAnalysisForReport to prevent re-setting the handler unnecessarily when only AI data changes.
-  // The PDF report will re-render with new aiAnalysisForReport via normal React rendering flow.
-  }, [setPrintHandler, t, lng, reportContentRef]); 
+  // Dependencies: setPrintHandler (stable callback from layout), t (for translations in error messages), lng (if translations depend on it).
+  // reportContentRef.current is NOT a valid dependency for useEffect as its changes don't trigger re-renders.
+  // The check for reportContentRef.current is done inside the dynamic import's .then() block.
+  }, [setPrintHandler, t, lng]); 
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-6 lg:p-8">
@@ -218,6 +221,7 @@ export default function DashboardClientContent({
         {children}
       </Suspense>
       
+      {/* This div is positioned off-screen and used by html2pdf.js to generate the report */}
       <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', width: '8.5in', backgroundColor: 'white', color: '#333' }}>
         <PrintableReport ref={reportContentRef} airQualityData={MOCK_AIR_QUALITY_DATA} aiAnalysis={aiAnalysisForReport} lng={lng} />
       </div>
@@ -225,3 +229,4 @@ export default function DashboardClientContent({
   );
 }
 
+    
