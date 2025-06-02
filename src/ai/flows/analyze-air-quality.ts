@@ -70,7 +70,7 @@ const analyzeAirQualityFlow = ai.defineFlow(
     outputSchema: AnalyzeAirQualityOutputSchema,
   },
   async (input) => {
-    const MAX_ATTEMPTS = 4; // Increased: 1 initial + 3 retries
+    const MAX_ATTEMPTS = 5; // 1 initial + 4 retries
     let attempts = 0;
     let lastError: any = null;
 
@@ -85,13 +85,13 @@ const analyzeAirQualityFlow = ai.defineFlow(
         const isRetriableError = errorMessage.includes('503') || errorMessage.includes('overloaded') || errorMessage.includes('service unavailable');
 
         if (isRetriableError && attempts < MAX_ATTEMPTS) {
-          // Using attempts for backoff: 1s, 2s, 3s for subsequent retries
+          // Using attempts for backoff: 1s, 2s, 3s, 4s for subsequent retries
           const delay = 1000 * attempts; 
-          console.warn(`analyzeAirQualityFlow attempt ${attempts} failed due to model overload. Retrying in ${delay}ms...`);
+          console.warn(`analyzeAirQualityFlow attempt ${attempts} of ${MAX_ATTEMPTS-1} failed due to model overload. Retrying in ${delay / 1000}s...`);
           await new Promise(resolve => setTimeout(resolve, delay));
         } else {
           // Not a retriable error or max retries reached
-          console.error(`analyzeAirQualityFlow failed after ${attempts} attempts. Last error:`, lastError);
+          console.error(`analyzeAirQualityFlow failed after ${attempts} attempt(s). Last error:`, lastError);
           throw lastError; // Re-throw the last recorded error
         }
       }
