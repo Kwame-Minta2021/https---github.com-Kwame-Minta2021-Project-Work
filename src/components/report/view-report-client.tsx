@@ -14,9 +14,9 @@ import { Skeleton } from '../ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
 import html2pdf from 'html2pdf.js';
 import { format } from 'date-fns';
+import { fr, enUS } from 'date-fns/locale'; // Import locales directly
 
 interface ViewReportClientProps {
-  currentReadings: AirQualityData;
   aiAnalysis: AnalyzeAirQualityOutput | null;
   localityReport: GenerateLocalityReportOutput | null;
   weeklyForecast: ForecastAirQualityOutput | null;
@@ -39,12 +39,11 @@ interface ViewReportClientProps {
     downloadingPdf: string;
     pdfDownloadedSuccess: string;
     pdfDownloadFailed: string;
-    reportGeneratedOn: string; 
+    reportGeneratedOn: string;
   };
 }
 
 export default function ViewReportClient({
-  currentReadings,
   aiAnalysis,
   localityReport,
   weeklyForecast,
@@ -115,7 +114,7 @@ export default function ViewReportClient({
           <div>
             <h1 className="text-3xl font-bold tracking-tight">{translations.pageTitle}</h1>
             <p className="text-sm text-muted-foreground">
-              {translations.reportGeneratedOn} {format(new Date(), 'PPpp', { locale: lng === 'fr' ? require('date-fns/locale/fr') : require('date-fns/locale/en-US') })}
+              {translations.reportGeneratedOn} {format(new Date(), 'PPpp', { locale: lng === 'fr' ? fr : enUS })}
             </p>
           </div>
         </div>
