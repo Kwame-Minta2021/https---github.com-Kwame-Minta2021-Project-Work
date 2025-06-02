@@ -87,7 +87,7 @@ const analyzeAirQualityFlow = ai.defineFlow(
         if (isRetriableError && attempts < MAX_ATTEMPTS) {
           // Using attempts for backoff: 1s, 2s, 3s, 4s for subsequent retries
           const delay = 1000 * attempts; 
-          console.warn(`analyzeAirQualityFlow attempt ${attempts} of ${MAX_ATTEMPTS-1} failed due to model overload. Retrying in ${delay / 1000}s...`);
+          console.warn(`analyzeAirQualityFlow attempt ${attempts} of ${MAX_ATTEMPTS -1} failed due to model overload. Retrying in ${delay / 1000}s...`);
           await new Promise(resolve => setTimeout(resolve, delay));
         } else {
           // Not a retriable error or max retries reached
@@ -106,4 +106,3 @@ const analyzeAirQualityFlow = ai.defineFlow(
     throw new Error("analyzeAirQualityFlow failed after max retries. Unknown error during retry loop.");
   }
 );
-

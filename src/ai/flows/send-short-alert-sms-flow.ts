@@ -12,7 +12,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-export const SendShortAlertInputSchema = z.object({
+const SendShortAlertInputSchema = z.object({
   pollutantName: z.string().describe("The name of the pollutant exceeding threshold (e.g., PM2.5, CO)."),
   currentValue: z.number().describe("The current measured value of the pollutant."),
   thresholdValue: z.number().describe("The threshold value that was exceeded."),
@@ -22,7 +22,7 @@ export const SendShortAlertInputSchema = z.object({
 });
 export type SendShortAlertInput = z.infer<typeof SendShortAlertInputSchema>;
 
-export const SendShortAlertOutputSchema = z.object({
+const SendShortAlertOutputSchema = z.object({
   status: z.string().describe('A message indicating the outcome of the SMS sending attempt.'),
   messageSent: z.string().optional().describe('The content of the message that was attempted to be sent.'),
   messageSid: z.string().optional().describe('The Twilio message SID if successfully sent.'),
