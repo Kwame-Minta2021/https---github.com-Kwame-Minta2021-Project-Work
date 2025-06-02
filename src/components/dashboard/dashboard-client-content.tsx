@@ -8,7 +8,7 @@ import { DateRange } from 'react-day-picker';
 import { subDays, format, parseISO, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next'; 
-import html2pdf from 'html2pdf.js';
+// import html2pdf from 'html2pdf.js'; // Removed static import
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -109,7 +109,11 @@ export default function DashboardClientContent({
     if (typeof setPrintHandler === 'function' && reportContentRef.current) {
       const handleGeneratePdf = async () => {
         console.log("DashboardClientContent: Attempting to generate PDF with html2pdf.js...");
-        if (reportContentRef.current) {
+        
+        // Dynamically import html2pdf.js here
+        const html2pdf = (await import('html2pdf.js')).default;
+
+        if (reportContentRef.current && html2pdf) {
           const element = reportContentRef.current;
           const timestamp = format(new Date(), 'yyyyMMdd_HHmmss');
           const filename = `BreatheEasy_Report_${timestamp}.pdf`;
@@ -131,8 +135,8 @@ export default function DashboardClientContent({
             alert(t('pdfGenerationErrorGeneric') || "An error occurred while generating the PDF.");
           }
         } else {
-          console.error('DashboardClientContent: Printable report content ref is not available.');
-          alert(t('reportContentMissingError') || 'Error: Report content not found. Cannot generate PDF.');
+          console.error('DashboardClientContent: Printable report content ref is not available or html2pdf failed to load.');
+          alert(t('reportContentMissingError') || 'Error: Report content not found or PDF library failed. Cannot generate PDF.');
         }
       };
       
