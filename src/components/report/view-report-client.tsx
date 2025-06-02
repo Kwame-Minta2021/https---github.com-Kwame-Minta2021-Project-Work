@@ -12,7 +12,7 @@ import type { GenerateLocalityReportOutput } from '@/ai/flows/generate-locality-
 import type { ForecastAirQualityOutput } from '@/ai/flows/forecast-air-quality-flow';
 import { Skeleton } from '../ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
-import html2pdf from 'html2pdf.js';
+// Removed static import: import html2pdf from 'html2pdf.js';
 import { format } from 'date-fns';
 import { fr, enUS } from 'date-fns/locale'; // Import locales directly
 
@@ -53,7 +53,7 @@ export default function ViewReportClient({
   const { toast } = useToast();
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
-  const handleDownloadPdf = () => {
+  const handleDownloadPdf = async () => {
     const element = document.getElementById('report-content-area');
     if (!element) {
       toast({
@@ -70,36 +70,38 @@ export default function ViewReportClient({
       description: "Please wait while the PDF is being generated...",
     });
 
-    const currentDate = format(new Date(), 'yyyy-MM-dd_HH-mm');
-    const filename = `BreatheEasy_AirQualityReport_${currentDate}.pdf`;
+    try {
+      const html2pdf = (await import('html2pdf.js')).default;
 
-    const options = {
-      margin: [0.5, 0.5, 0.5, 0.5], // inches: top, left, bottom, right
-      filename: filename,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, logging: false },
-      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
-      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] as any }
-    };
+      const currentDate = format(new Date(), 'yyyy-MM-dd_HH-mm');
+      const filename = `BreatheEasy_AirQualityReport_${currentDate}.pdf`;
 
-    html2pdf().from(element).set(options).save()
-      .then(() => {
-        toast({
-          title: translations.pdfDownloadedSuccess,
-          description: `${filename} has been downloaded.`,
-        });
-      })
-      .catch((error) => {
-        console.error("PDF Download Error:", error);
-        toast({
-          variant: "destructive",
-          title: translations.pdfDownloadFailed,
-          description: error?.message || "An unknown error occurred.",
-        });
-      })
-      .finally(() => {
-        setIsDownloadingPdf(false);
+      const options = {
+        margin: [0.5, 0.5, 0.5, 0.5], // inches: top, left, bottom, right
+        filename: filename,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] as any }
+      };
+
+      await html2pdf().from(element).set(options).save();
+      
+      toast({
+        title: translations.pdfDownloadedSuccess,
+        description: `${filename} has been downloaded.`,
       });
+
+    } catch (error: any) {
+      console.error("PDF Download Error:", error);
+      toast({
+        variant: "destructive",
+        title: translations.pdfDownloadFailed,
+        description: error?.message || "An unknown error occurred.",
+      });
+    } finally {
+      setIsDownloadingPdf(false);
+    }
   };
 
   return (
