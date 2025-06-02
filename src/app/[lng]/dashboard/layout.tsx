@@ -80,22 +80,24 @@ export default function DashboardLayout({
 
   const setPrintHandlerCallback = React.useCallback<SetPrintHandlerType>((handler) => {
     printRef.current = handler;
-    setIsPrintReady(!!handler);
-    if (handler) {
-      console.log("DashboardLayout: Print handler has been SET by child.");
+    const ready = !!handler;
+    setIsPrintReady(ready);
+    if (ready) {
+      console.log("DashboardLayout: Print handler has been SET by child. isPrintReady:", ready);
     } else {
-      console.log("DashboardLayout: Print handler has been UNSET by child (e.g., on unmount).");
+      console.log("DashboardLayout: Print handler has been UNSET by child. isPrintReady:", ready);
     }
   }, []);
 
 
   const handlePrint = () => {
-    console.log("DashboardLayout: handlePrint triggered. printRef.current:", printRef.current);
-    if (printRef.current) {
+    console.log("DashboardLayout: handlePrint triggered. isPrintReady state:", isPrintReady, "printRef.current exists:", !!printRef.current);
+    if (isPrintReady && printRef.current) {
       printRef.current();
     } else {
-      console.error("DashboardLayout: Print handler (printRef.current) is not set or was cleared.");
-      alert(t('popupBlockerWarning') || "Report generation feature is not ready or was cleared. Please try again in a moment.");
+      console.error("DashboardLayout: Print action called but not ready. isPrintReady:", isPrintReady, "printRef.current exists:", !!printRef.current);
+      // Use a more specific alert if the handler isn't set, even if isPrintReady was true (race condition)
+      alert(t('reportFeatureNotReady') || "Report generation feature is currently unavailable. Please try again shortly.");
     }
   };
   
