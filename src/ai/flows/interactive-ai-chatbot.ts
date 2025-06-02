@@ -25,7 +25,7 @@ const AskChatbotInputSchema = z.object({
 export type AskChatbotInput = z.infer<typeof AskChatbotInputSchema>;
 
 const AskChatbotOutputSchema = z.object({
-  response: z.string().describe('The chatbot response to the user question. This response should be in the language specified in the input.'),
+  response: z.string().describe('The chatbot response to the user question. This response should be in the language specified in the input and contain no markdown formatting.'),
 });
 export type AskChatbotOutput = z.infer<typeof AskChatbotOutputSchema>;
 
@@ -48,6 +48,11 @@ Your primary function is to answer user questions about:
 
 IMPORTANT: Respond ENTIRELY in the language specified by the '{{language}}' parameter. For example, if '{{language}}' is 'fr', your entire response must be in French.
 
+IMPORTANT RESPONSE FORMATTING:
+- Provide your response as plain text IN THE SPECIFIED LANGUAGE ({{language}}).
+- Do NOT use any markdown formatting. Specifically, do not use double asterisks (**) for bolding, hashes (#) for headers, hyphens (-) or asterisks (*) for lists, or markdown links like [text](url).
+- Your entire response should be a single block of plain text, suitable for direct display in a chat interface.
+
 You have access to the following real-time sensor readings from the dashboard:
 - CO (MQ-9): {{{coLevel}}} ppm
 - VOCs (MQ-135): {{{vocLevel}}} ppm
@@ -65,11 +70,7 @@ IMPORTANT SCOPE LIMITATIONS:
     - "My apologies, but my expertise is limited to air quality information relevant to this dashboard. How can I help you with that?"
     - "That question is outside of my current capabilities. I'm here to help with your air quality queries!"
 
-IMPORTANT RESPONSE FORMATTING:
-- Provide your response as plain text IN THE SPECIFIED LANGUAGE ({{language}}).
-- Do NOT use any markdown formatting. Specifically, do not use double asterisks (**) for bolding.
-
-Answer the following user question accurately, helpfully, and in a user-friendly manner, using the sensor data to inform your answer where relevant. Ensure the response is in {{language}}.
+Answer the following user question accurately, helpfully, and in a user-friendly manner, using the sensor data to inform your answer where relevant. Ensure the response is in {{language}} and is plain text without markdown.
 
 User Question: {{{question}}}
 `,

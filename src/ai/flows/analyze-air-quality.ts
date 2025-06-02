@@ -24,8 +24,8 @@ const AnalyzeAirQualityInputSchema = z.object({
 export type AnalyzeAirQualityInput = z.infer<typeof AnalyzeAirQualityInputSchema>;
 
 const AnalyzeAirQualityOutputSchema = z.object({
-  effectOnHumanHealth: z.string().describe('A concise, user-friendly statement detailing the health implications of the detected air quality levels, as if determined by an RL model. This response should be in the language specified in the input.'),
-  bestActionToReducePresence: z.string().describe('Specific, actionable recommendations to improve air quality, including precautionary measures to take and advice on how to reduce gas concentrations. This response should be in the language specified in the input.'),
+  effectOnHumanHealth: z.string().describe('A concise, user-friendly statement detailing the health implications of the detected air quality levels, as if determined by an RL model. This response should be in the language specified in the input and contain no markdown formatting.'),
+  bestActionToReducePresence: z.string().describe('Specific, actionable recommendations to improve air quality, including precautionary measures to take and advice on how to reduce gas concentrations. This response should be in the language specified in the input and contain no markdown formatting.'),
 });
 export type AnalyzeAirQualityOutput = z.infer<typeof AnalyzeAirQualityOutputSchema>;
 
@@ -43,6 +43,11 @@ Based on your learned policy, assess the current conditions, predict the "Effect
 
 IMPORTANT: Respond ENTIRELY in the language specified by the '{{language}}' parameter. For example, if '{{language}}' is 'fr', your entire response for "Effect on Human Health" and "Best Action to Reduce Presence" must be in French.
 
+IMPORTANT RESPONSE FORMATTING:
+- Provide ALL responses as plain text IN THE SPECIFIED LANGUAGE ({{language}}).
+- Do NOT use any markdown formatting (e.g., no asterisks for bolding or italics, no hashes for headers, no lists starting with hyphens or asterisks, no markdown links).
+- Ensure that the "Effect on Human Health" and "Best Action to Reduce Presence" fields are simple strings without any special formatting characters. All content should be suitable for direct display as plain text.
+
 Air Quality Data:
 CO (Carbon Monoxide): {{co}} ppm
 VOCs (Volatile Organic Compounds): {{vocs}} ppm
@@ -53,8 +58,8 @@ PM10 (Particulate Matter 10): {{pm100}} ug/m3
 Language for response: {{language}}
 
 Based on this data, provide:
-1.  Effect on Human Health: A concise, user-friendly statement detailing the health implications. (In {{language}})
-2.  Best Action to Reduce Presence: Specific, actionable recommendations to improve air quality. This should include precautionary measures individuals should take and detailed advice on how to reduce the concentration of the detected pollutants. (In {{language}})
+1.  Effect on Human Health: (Plain text, in {{language}}, no markdown)
+2.  Best Action to Reduce Presence: (Plain text, in {{language}}, no markdown, including precautionary measures and advice on reducing pollutant concentrations)
 `,
 });
 
