@@ -23,7 +23,6 @@ import {
   SidebarContent,
   SidebarFooter,
   SidebarInset,
-  // SidebarTrigger, // No longer needed directly here as it's in Header
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
@@ -48,6 +47,9 @@ import { sendSmsReport, type SendSmsReportInput } from '@/ai/flows/send-sms-repo
 
 
 export type PrintHandler = () => void;
+// Updated type for the setter function to accept null
+export type SetPrintHandlerType = (handler: PrintHandler | null) => void;
+
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -71,17 +73,29 @@ export default function DashboardLayout({
   }, [currentLng, i18n]);
   
   const printRef = React.useRef<PrintHandler | null>(null);
+  const [isPrintReady, setIsPrintReady] = React.useState(false);
   const [isChatbotOpen, setIsChatbotOpen] = React.useState(false);
-  const [isSendingSms, setIsSendingSms] = React.useState(false); // State for SMS sending
+  const [isSendingSms, setIsSendingSms] = React.useState(false);
   const { setTheme } = useTheme();
+
+  const setPrintHandlerCallback = React.useCallback<SetPrintHandlerType>((handler) => {
+    printRef.current = handler;
+    setIsPrintReady(!!handler);
+    if (handler) {
+      console.log("DashboardLayout: Print handler has been SET by child.");
+    } else {
+      console.log("DashboardLayout: Print handler has been UNSET by child (e.g., on unmount).");
+    }
+  }, []);
+
 
   const handlePrint = () => {
     console.log("DashboardLayout: handlePrint triggered. printRef.current:", printRef.current);
     if (printRef.current) {
       printRef.current();
     } else {
-      console.error("DashboardLayout: Print handler (printRef.current) is not set.");
-      alert("Report generation feature is not ready. Please try again in a moment.");
+      console.error("DashboardLayout: Print handler (printRef.current) is not set or was cleared.");
+      alert(t('popupBlockerWarning') || "Report generation feature is not ready or was cleared. Please try again in a moment.");
     }
   };
   
@@ -118,8 +132,7 @@ export default function DashboardLayout({
           pm2_5: MOCK_AIR_QUALITY_DATA.pm2_5.value,
           pm10: MOCK_AIR_QUALITY_DATA.pm10.value,
         },
-        aiAnalysis: analysisResult, 
-        // targetPhoneNumber: process.env.NEXT_PUBLIC_CONTROL_UNIT_PHONE // Example if using client-side accessible env var
+        aiAnalysis: analysisResult,
       };
 
       const result = await sendSmsReport(smsFlowInput);
@@ -216,10 +229,11 @@ export default function DashboardLayout({
           onToggleChatbot={toggleChatbot}
           onSendSmsReport={handleSendSmsReport} 
           isSendingSms={isSendingSms} 
+          isPrintReady={isPrintReady} // Pass isPrintReady state
           lng={currentLng}
         />
         {React.cloneElement(children as React.ReactElement, { 
-          setPrintHandler: (handler: PrintHandler) => printRef.current = handler,
+          setPrintHandler: setPrintHandlerCallback, // Pass the memoized callback
           lng: currentLng 
         })}
       </SidebarInset>

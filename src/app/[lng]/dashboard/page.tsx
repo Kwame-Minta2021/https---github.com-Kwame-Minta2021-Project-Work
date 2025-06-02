@@ -3,12 +3,11 @@ import DashboardClientContent from '@/components/dashboard/dashboard-client-cont
 import AIAnalyzerSection from '@/components/dashboard/ai-analyzer-section';
 import { MOCK_AIR_QUALITY_DATA } from '@/lib/constants';
 import { analyzeAirQuality, type AnalyzeAirQualityOutput, type AnalyzeAirQualityInput } from '@/ai/flows/analyze-air-quality';
-import type { PrintHandler } from './layout'; 
+import type { PrintHandler, SetPrintHandlerType } from './layout'; 
 import type { AirQualityData } from '@/types';
-// import { getTranslations } from '@/i18n'; // No longer needed here as t is obtained in Client Components
 
 interface DashboardPageProps {
-  setPrintHandler?: (handler: PrintHandler) => void;
+  setPrintHandler?: SetPrintHandlerType; // Updated type
   params: { lng: string }; 
 }
 
@@ -27,7 +26,7 @@ async function fetchAIAnalysisForReport(lng: string): Promise<AnalyzeAirQualityO
   try {
     const analysis = await analyzeAirQuality(aiInput);
     return analysis;
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to fetch AI analysis for report. Raw error object:", error);
     if (error instanceof Error) {
       console.error("Error message:", error.message);
@@ -36,7 +35,6 @@ async function fetchAIAnalysisForReport(lng: string): Promise<AnalyzeAirQualityO
         console.error("Error stack:", error.stack);
       }
     } else if (typeof error === 'object' && error !== null) {
-      // Attempt to log properties of the error object if it's not an Error instance
       for (const key in error) {
         if (Object.prototype.hasOwnProperty.call(error, key)) {
           console.error(`Error property - ${key}:`, (error as any)[key]);
@@ -49,8 +47,6 @@ async function fetchAIAnalysisForReport(lng: string): Promise<AnalyzeAirQualityO
 
 export default async function DashboardPage({ setPrintHandler, params: { lng } }: DashboardPageProps) {
   const aiAnalysisForReportData = await fetchAIAnalysisForReport(lng);
-  // AIAnalyzerSection is a server component and will fetch its own data using the lng prop.
-  // We still prepare the raw sensor readings for it.
   const rawSensorReadingsForAnalyzer: Omit<AnalyzeAirQualityInput, 'language'> = {
     co: MOCK_AIR_QUALITY_DATA.co.value,
     vocs: MOCK_AIR_QUALITY_DATA.vocs.value,
@@ -63,18 +59,10 @@ export default async function DashboardPage({ setPrintHandler, params: { lng } }
   return (
     <DashboardClientContent 
       setPrintHandler={setPrintHandler}
-      aiAnalysisForReport={aiAnalysisForReportData} // This is already translated by fetchAIAnalysisForReport
+      aiAnalysisForReport={aiAnalysisForReportData}
       lng={lng}
     >
-      {/* AIAnalyzerSection will internally call analyzeAirQuality with its lng prop */}
       <AIAnalyzerSection readings={rawSensorReadingsForAnalyzer} lng={lng} />
     </DashboardClientContent>
   );
 }
-
-// Metadata generation can also be i18n-aware if needed
-// export const metadata = {
-// title: "Dashboard | BreatheEasy",
-// description: "Monitor your air quality in real-time.",
-// };
-

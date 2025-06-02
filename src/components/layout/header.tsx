@@ -2,19 +2,20 @@
 "use client";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { FileDown, Bot, MessageSquareShare, Loader2 } from "lucide-react"; // Added MessageSquareShare and Loader2
+import { FileDown, Bot, MessageSquareShare, Loader2 } from "lucide-react"; 
 import type { PrintHandler } from '@/app/[lng]/dashboard/layout'; 
 import { useTranslation } from 'react-i18next';
 
 interface HeaderProps {
   onPrint: PrintHandler;
   onToggleChatbot: () => void;
-  onSendSmsReport: () => Promise<void>; // New prop for SMS report
-  isSendingSms: boolean; // New prop for loading state
+  onSendSmsReport: () => Promise<void>; 
+  isSendingSms: boolean; 
+  isPrintReady: boolean; // New prop
   lng: string; 
 }
 
-export function Header({ onPrint, onToggleChatbot, onSendSmsReport, isSendingSms, lng }: HeaderProps) {
+export function Header({ onPrint, onToggleChatbot, onSendSmsReport, isSendingSms, isPrintReady, lng }: HeaderProps) {
   const { t } = useTranslation();
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-md sm:px-6">
@@ -36,7 +37,7 @@ export function Header({ onPrint, onToggleChatbot, onSendSmsReport, isSendingSms
           <Bot className="mr-2 h-4 w-4" />
           {t('aiChatbot')}
         </Button>
-        <Button variant="outline" size="sm" onClick={onPrint}>
+        <Button variant="outline" size="sm" onClick={onPrint} disabled={!isPrintReady}>
           <FileDown className="mr-2 h-4 w-4" />
           {t('generatePdf')}
         </Button>

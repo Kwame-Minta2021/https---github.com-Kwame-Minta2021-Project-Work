@@ -20,11 +20,11 @@ import PrintableReport from '@/components/dashboard/printable-report';
 import { MOCK_AIR_QUALITY_DATA, MOCK_HISTORICAL_DATA as ALL_MOCK_HISTORICAL_DATA } from '@/lib/constants';
 import type { HistoricalDataPoint } from '@/types';
 import type { AnalyzeAirQualityOutput } from '@/ai/flows/analyze-air-quality';
-import type { PrintHandler } from '@/app/[lng]/dashboard/layout'; 
+import type { PrintHandler, SetPrintHandlerType } from '@/app/[lng]/dashboard/layout'; 
 import { cn } from '@/lib/utils';
 
 interface DashboardClientContentProps {
-  setPrintHandler?: (handler: PrintHandler) => void;
+  setPrintHandler?: SetPrintHandlerType; 
   aiAnalysisForReport: AnalyzeAirQualityOutput | null;
   children: React.ReactNode; 
   lng: string;
@@ -105,7 +105,7 @@ export default function DashboardClientContent({
 
   React.useEffect(() => {
     if (typeof setPrintHandler === 'function') {
-      const handlePrintRequest = () => {
+      const handlePrintRequest: PrintHandler = () => {
         console.log("DashboardClientContent: Attempting to print report...");
         const printWindow = window.open('', '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
 
@@ -120,10 +120,10 @@ export default function DashboardClientContent({
             return;
           }
 
-          const reportHTML = reportElement.innerHTML;
-          console.log("DashboardClientContent: Report HTML captured. Length:", reportHTML.length);
+          const reportHTMLContent = reportElement.innerHTML;
+          console.log("DashboardClientContent: Report HTML captured. Length:", reportHTMLContent.length);
 
-          if (reportHTML.trim() === "") {
+          if (reportHTMLContent.trim() === "") {
               console.error('DashboardClientContent: Report content is empty.');
               try {printWindow.alert('Error: Report content is empty. Cannot print.');} catch(e) {console.error("Failed to alert in print window",e);}
               try {printWindow.close();} catch(e) {console.error("Failed to close print window",e);}
@@ -131,63 +131,61 @@ export default function DashboardClientContent({
           }
           
           printWindow.document.open();
-          printWindow.document.write(`
-            <html>
-              <head>
-                <title>${t('reportTitle') || 'BreatheEasy Air Quality Report'}</title>
-                <style>
-                  body { font-family: Arial, Helvetica, sans-serif; margin: 25px; line-height: 1.6; color: #333; background-color: #fff; }
-                  table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-                  th, td { border: 1px solid #ccc; padding: 10px; text-align: left; vertical-align: top; }
-                  th { background-color: #f0f4f7; font-weight: bold; color: #333; }
-                  h1, h2, h3 { color: #64B5F6; margin-block-start: 1em; margin-block-end: 0.67em; }
-                  h1 { font-size: 26px; font-weight: bold; text-align: center; margin-bottom: 15px; }
-                  h2 { font-size: 22px; font-weight: bold; margin-bottom: 12px; border-bottom: 2px solid #64B5F6; padding-bottom: 6px;}
-                  h3 { font-size: 18px; font-weight: bold; margin-bottom: 8px; color: #444;}
-                  p { margin-bottom: 12px; }
-                  .whitespace-pre-line { white-space: pre-line; }
-                  header, section, footer { margin-bottom: 25px; }
-                  footer { text-align: center; font-size: 13px; color: #777; margin-top: 30px; padding-top: 15px; border-top: 1px solid #eee; }
-                  /* Specific classes from PrintableReport for better fidelity */
-                  .text-gray-600 { color: #555; }
-                  .text-primary { color: #64B5F6; }
-                  .font-bold { font-weight: bold; }
-                  .font-semibold { font-weight: 600; }
-                  .text-xl { font-size: 20px; }
-                  .text-3xl { font-size: 28px; }
-                  .border-b-2 { border-bottom-width: 2px; }
-                  .border-primary { border-bottom-color: #64B5F6; } /* Simplified */
-                  .pb-2 { padding-bottom: 8px; }
-                  .leading-relaxed { line-height: 1.75; }
-                  .flex { display: flex; }
-                  .items-center { align-items: center; }
-                  .mr-2 { margin-right: 8px; } /* For potential icons in report */
-                  .bg-gray-100 { background-color: #f9f9f9; } /* For table header row */
-                  .text-sm { font-size: 14px; }
-                  .text-xs { font-size: 12px; }
-                </style>
-              </head>
-              <body>
-                ${reportHTML}
-              </body>
-            </html>
-          `);
+          
+          let htmlDocument = '<html><head>';
+          htmlDocument += '<title>' + (t('reportTitle') || 'BreatheEasy Air Quality Report').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</title>';
+          htmlDocument += '<style>';
+          htmlDocument += `
+            body { font-family: Arial, Helvetica, sans-serif; margin: 25px; line-height: 1.6; color: #333; background-color: #fff; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+            th, td { border: 1px solid #ccc; padding: 10px; text-align: left; vertical-align: top; }
+            th { background-color: #f0f4f7; font-weight: bold; color: #333; }
+            h1, h2, h3 { color: #64B5F6; margin-block-start: 1em; margin-block-end: 0.67em; }
+            h1 { font-size: 26px; font-weight: bold; text-align: center; margin-bottom: 15px; }
+            h2 { font-size: 22px; font-weight: bold; margin-bottom: 12px; border-bottom: 2px solid #64B5F6; padding-bottom: 6px;}
+            h3 { font-size: 18px; font-weight: bold; margin-bottom: 8px; color: #444;}
+            p { margin-bottom: 12px; }
+            .whitespace-pre-line { white-space: pre-line; }
+            header, section, footer { margin-bottom: 25px; }
+            footer { text-align: center; font-size: 13px; color: #777; margin-top: 30px; padding-top: 15px; border-top: 1px solid #eee; }
+            /* Specific classes from PrintableReport for better fidelity */
+            .text-gray-600 { color: #555; }
+            .text-primary { color: #64B5F6; }
+            .font-bold { font-weight: bold; }
+            .font-semibold { font-weight: 600; }
+            .text-xl { font-size: 20px; }
+            .text-3xl { font-size: 28px; }
+            .border-b-2 { border-bottom-width: 2px; }
+            /* .border-primary { border-bottom-color: #64B5F6; } */ /* Simplified, already commented out in previous version */
+            .pb-2 { padding-bottom: 8px; }
+            .leading-relaxed { line-height: 1.75; }
+            .flex { display: flex; }
+            .items-center { align-items: center; }
+            .mr-2 { margin-right: 8px; } /* For potential icons in report */
+            .bg-gray-100 { background-color: #f9f9f9; } /* For table header row */
+            .text-sm { font-size: 14px; }
+            .text-xs { font-size: 12px; }
+          `;
+          htmlDocument += '</style></head><body>';
+          htmlDocument += reportHTMLContent;
+          htmlDocument += '</body></html>';
+
+          printWindow.document.write(htmlDocument);
           printWindow.document.close();
 
           setTimeout(() => {
             try {
-              printWindow.focus(); // Focus the new window before printing
+              printWindow.focus(); 
               printWindow.print();
               console.log("DashboardClientContent: Print dialog initiated.");
             } catch (e) {
               console.error("DashboardClientContent: Error initiating print dialog.", e);
               alert("Could not initiate print. Please try again or check browser console.");
             }
-          }, 300); // Increased delay slightly
+          }, 300);
 
           printWindow.onafterprint = () => {
             console.log("DashboardClientContent: onafterprint event fired.");
-            // reportElement.style.display = originalDisplay; // The element is display:none anyway
             try { printWindow.close(); } catch(e) {console.error("Failed to close print window post-print",e);}
           };
 
@@ -197,11 +195,17 @@ export default function DashboardClientContent({
         }
       };
       setPrintHandler(handlePrintRequest);
-      console.log("DashboardClientContent: Print handler has been set.");
+      console.log("DashboardClientContent: Print handler callback has been SET.");
+      
+      return () => {
+        setPrintHandler(null);
+        console.log("DashboardClientContent: Print handler callback has been UNSET.");
+      };
+
     } else {
       console.warn("DashboardClientContent: setPrintHandler was not a function. Print functionality will be disabled.");
     }
-  }, [setPrintHandler, aiAnalysisForReport, t, lng]); // Added t and lng as dependencies
+  }, [setPrintHandler, aiAnalysisForReport, t, lng]); 
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-6 lg:p-8">
@@ -257,3 +261,4 @@ export default function DashboardClientContent({
     </div>
   );
 }
+
