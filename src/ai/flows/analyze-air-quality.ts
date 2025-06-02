@@ -34,7 +34,7 @@ export async function analyzeAirQuality(input: AnalyzeAirQualityInput): Promise<
 }
 
 const analyzeAirQualityPrompt = ai.definePrompt({
-  name: 'analyzeAirQualityRLSimPrompt', // Renamed for clarity
+  name: 'analyzeAirQualityRLSimPrompt', 
   input: {schema: AnalyzeAirQualityInputSchema},
   output: {schema: AnalyzeAirQualityOutputSchema},
   prompt: `You are an advanced Reinforcement Learning (RL) model pre-trained on diverse air quality datasets, health outcomes, and environmental interventions.
@@ -65,12 +65,12 @@ Based on this data, provide:
 
 const analyzeAirQualityFlow = ai.defineFlow(
   {
-    name: 'analyzeAirQualityRLSimFlow', // Renamed for clarity
+    name: 'analyzeAirQualityRLSimFlow', 
     inputSchema: AnalyzeAirQualityInputSchema,
     outputSchema: AnalyzeAirQualityOutputSchema,
   },
   async (input) => {
-    const MAX_ATTEMPTS = 5; // 1 initial + 4 retries
+    const MAX_ATTEMPTS = 6; // 1 initial + 5 retries
     let attempts = 0;
     let lastError: any = null;
 
@@ -80,29 +80,28 @@ const analyzeAirQualityFlow = ai.defineFlow(
         return output!;
       } catch (error: any) {
         attempts++;
-        lastError = error; // Store the last error
+        lastError = error; 
         const errorMessage = typeof error.message === 'string' ? error.message.toLowerCase() : '';
         const isRetriableError = errorMessage.includes('503') || errorMessage.includes('overloaded') || errorMessage.includes('service unavailable');
 
         if (isRetriableError && attempts < MAX_ATTEMPTS) {
-          // Using attempts for backoff: 1s, 2s, 3s, 4s for subsequent retries
-          const delay = 1000 * attempts; 
-          console.warn(`analyzeAirQualityFlow attempt ${attempts} of ${MAX_ATTEMPTS -1} failed due to model overload. Retrying in ${delay / 1000}s...`);
+          // Adjusted delay: 1s, 3s, 4s, 6s, 7s for subsequent retries
+          const delay = 1000 * (attempts + Math.floor(attempts / 2)); 
+          console.warn(`analyzeAirQualityFlow attempt ${attempts} (max ${MAX_ATTEMPTS}) failed due to model overload. Retrying in ${delay / 1000}s...`);
           await new Promise(resolve => setTimeout(resolve, delay));
         } else {
-          // Not a retriable error or max retries reached
           console.error(`analyzeAirQualityFlow failed after ${attempts} attempt(s). Last error:`, lastError);
-          throw lastError; // Re-throw the last recorded error
+          throw lastError; 
         }
       }
     }
-    // This fallback should theoretically not be reached if logic above is correct
-    // but as a safeguard, throw the last known error or a generic one.
+    
     if (lastError) {
         console.error(`analyzeAirQualityFlow ultimately failed after ${attempts} attempts. Last error:`, lastError);
         throw lastError;
     }
-    // This should be extremely rare if lastError is always set in catch block.
+    
     throw new Error("analyzeAirQualityFlow failed after max retries. Unknown error during retry loop.");
   }
 );
+
