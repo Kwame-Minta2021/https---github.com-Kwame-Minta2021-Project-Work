@@ -1,127 +1,203 @@
+// src/components/dashboard/dashboard-client-content.tsx
+'use client';
 
-"use client"; 
-import React, { useState, useEffect } from 'react';
-import type { AirQualityData } from '@/types';
-import type { AnalyzeAirQualityOutput } from '@/ai/flows/analyze-air-quality';
-import { format } from 'date-fns';
-import { useTranslation } from 'react-i18next'; 
+import React, { useEffect, useState, Suspense } from 'react';
+import { DateRange } from 'react-day-picker';
+import { subDays, format, parseISO, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
+import { Calendar as CalendarIcon } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
-interface PrintableReportProps {
-  airQualityData: AirQualityData;
-  aiAnalysis: AnalyzeAirQualityOutput | null;
-  lng: string; 
-  selectedDateRange?: string;
+import { Button } from '@/components/ui/button';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import RealtimeDataGrid from '@/components/dashboard/realtime-data-grid';
+import DataVisualization from '@/components/dashboard/data-visualization';
+import { MOCK_AIR_QUALITY_DATA, MOCK_HISTORICAL_DATA as ALL_MOCK_HISTORICAL_DATA } from '@/lib/constants';
+import type { HistoricalDataPoint, CustomAlertSettings, AirQualityData } from '@/types';
+import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+
+
+interface DashboardClientContentProps {
+  children: React.ReactNode;
+  lng: string;
+  initialCustomAlertSettings: CustomAlertSettings;
 }
 
-const PrintableReport = React.forwardRef<HTMLDivElement, PrintableReportProps>(
-  ({ airQualityData, aiAnalysis, lng, selectedDateRange }, ref) => {
-    const { t } = useTranslation(); 
-    const [generatedOnTimestamp, setGeneratedOnTimestamp] = useState<string | null>(null);
+function AIAnalyzerSkeleton({ t }: { t: (key: string) => string }) {
+  return (
+    <section id="analyzer-skeleton" className="mb-8 scroll-mt-20">
+      <h2 className="text-2xl font-semibold tracking-tight mb-4">{t('aiAnalyzer')}</h2>
+      <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle>{t('rlModelAnalysis')}</CardTitle>
+          <CardDescription>
+            {t('rlModelAnalysisDesc')}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div>
+            <h3 className="font-semibold text-lg mb-2">{t('effectOnHumanHealth')}</h3>
+            <Skeleton className="h-4 w-3/4 mb-2" />
+            <Skeleton className="h-4 w-1/2" />
+          </div>
+          <hr className="my-4" />
+          <div>
+            <h3 className="font-semibold text-lg mb-2">{t('bestActionToReducePresence')}</h3>
+            <Skeleton className="h-4 w-full mb-2" />
+            <Skeleton className="h-4 w-5/6 mb-2" />
+            <Skeleton className="h-4 w-3/4" />
+          </div>
+        </CardContent>
+      </Card>
+    </section>
+  );
+}
 
-    useEffect(() => {
-      setGeneratedOnTimestamp(format(new Date(), 'MMMM dd, yyyy HH:mm:ss'));
-    }, [t, lng]); 
-
-    const sensorReadings = [
-      airQualityData.co,
-      airQualityData.vocs,
-      airQualityData.ch4Lpg,
-      airQualityData.pm1_0,
-      airQualityData.pm2_5,
-      airQualityData.pm10,
-    ];
-
-    const styles = {
-      page: { fontFamily: 'Arial, sans-serif', fontSize: '10pt', color: '#333333', backgroundColor: '#ffffff', padding: '0.5in', width: '100%' },
-      header: { textAlign: 'center' as 'center', marginBottom: '20px' },
-      h1: { fontSize: '20pt', fontWeight: 'bold', color: '#2C5282', marginBottom: '5px' }, 
-      h2: { fontSize: '16pt', fontWeight: 'bold', color: '#2C5282', marginTop: '20px', marginBottom: '10px', borderBottom: '1px solid #CBD5E0', paddingBottom: '3px' },
-      h3: { fontSize: '12pt', fontWeight: 'bold', color: '#4A5568', marginBottom: '5px' }, 
-      p: { marginBottom: '10px', lineHeight: '1.4' },
-      table: { width: '100%', borderCollapse: 'collapse' as 'collapse', marginBottom: '20px', fontSize: '9pt' },
-      th: { border: '1px solid #CBD5E0', padding: '8px', textAlign: 'left' as 'left', backgroundColor: '#EBF4FF', fontWeight: 'bold' }, 
-      td: { border: '1px solid #CBD5E0', padding: '8px', textAlign: 'left' as 'left' },
-      textRight: { textAlign: 'right' as 'right' },
-      footer: { marginTop: '30px', paddingTop: '10px', borderTop: '1px solid #E2E8F0', textAlign: 'center' as 'center', fontSize: '8pt', color: '#718096' },
-      preLine: { whiteSpace: 'pre-line' as 'pre-line', wordWrap: 'break-word' as 'break-word' },
-      flexCenter: { display: 'flex', alignItems: 'center' },
-      icon: { marginRight: '8px', width: '20px', height: '20px', fill: '#2C5282'},
-      reportContainer: { width: '7.5in', margin: '0 auto' } 
-    };
-
-    return (
-      <div ref={ref} style={styles.page} id="printable-report-content-wrapper">
-        <div style={styles.reportContainer}>
-            <header style={styles.header}>
-            <h1 style={styles.h1}>{t('reportTitle')}</h1>
-            {generatedOnTimestamp && (
-                <p style={{...styles.p, fontSize: '9pt', color: '#718096'}}>
-                {t('reportGeneratedOn')}: {generatedOnTimestamp}
-                </p>
-            )}
-            <p style={{...styles.p, fontSize: '9pt', color: '#718096'}}>
-                {t('reportReadingsTimestamp')}: {format(airQualityData.timestamp, 'MMMM dd, yyyy HH:mm:ss')}
-            </p>
-            {selectedDateRange && selectedDateRange !== t('noDateRangeSelected') && (
-              <p style={{...styles.p, fontSize: '9pt', color: '#718096'}}>
-                {t('reportSelectedDateRange')}: {selectedDateRange}
-              </p>
-            )}
-            </header>
-
-            <section>
-            <h2 style={styles.h2}>{t('reportSensorReadingsTitle')}</h2>
-            <table style={styles.table}>
-                <thead>
-                <tr>
-                    <th style={styles.th}>{t('reportPollutantHeader')}</th>
-                    <th style={{...styles.th, ...styles.textRight}}>{t('reportValueHeader')}</th>
-                    <th style={styles.th}>{t('reportUnitHeader')}</th>
-                </tr>
-                </thead>
-                <tbody>
-                {sensorReadings.map((reading) => (
-                    <tr key={reading.id}>
-                    <td style={styles.td}>{reading.name}</td>
-                    <td style={{...styles.td, ...styles.textRight}}>{reading.value.toFixed(2)}</td>
-                    <td style={styles.td}>{reading.unit}</td>
-                    </tr>
-                ))}
-                </tbody>
-            </table>
-            </section>
-
-            {aiAnalysis && (
-            <section>
-                <h2 style={{...styles.h2, ...styles.flexCenter}}>
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style={styles.icon} fill="currentColor">
-                    <path d="M12 2a2.5 2.5 0 00-2.5 2.5V7a2.5 2.5 0 005 0V4.5A2.5 2.5 0 0012 2zM6.5 2A2.5 2.5 0 004 4.5V7a2.5 2.5 0 005 0V4.5A2.5 2.5 0 006.5 2zM17.5 2a2.5 2.5 0 00-2.5 2.5V7a2.5 2.5 0 005 0V4.5A2.5 2.5 0 0017.5 2zM2 12a2.5 2.5 0 00-2.5 2.5V17a2.5 2.5 0 005 0v-2.5A2.5 2.5 0 002 12zm4.5 0a2.5 2.5 0 00-2.5 2.5V17a2.5 2.5 0 005 0v-2.5A2.5 2.5 0 004.5 12zm7.5 0a2.5 2.5 0 00-2.5 2.5V17a2.5 2.5 0 005 0v-2.5A2.5 2.5 0 0012 12zm5 0a2.5 2.5 0 00-2.5 2.5V17a2.5 2.5 0 005 0v-2.5A2.5 2.5 0 0017 12zm-10.5 5a2.5 2.5 0 00-2.5 2.5V22a2.5 2.5 0 005 0v-2.5a2.5 2.5 0 00-2.5-2.5zm5.5 0a2.5 2.5 0 00-2.5 2.5V22a2.5 2.5 0 005 0v-2.5A2.5 2.5 0 0012 17z"></path>
-                </svg>
-                {t('rlModelAnalysis')}
-                </h2>
-                <div style={{marginBottom: '15px'}}>
-                <h3 style={styles.h3}>{t('effectOnHumanHealth')}</h3>
-                <p style={{...styles.p, ...styles.preLine}}>
-                    {aiAnalysis.effectOnHumanHealth || t('reportNoHealthImpactData')}
-                </p>
-                </div>
-                <div>
-                <h3 style={styles.h3}>{t('bestActionToReducePresence')}</h3>
-                <p style={{...styles.p, ...styles.preLine}}>
-                    {aiAnalysis.bestActionToReducePresence || t('reportNoRecommendationsData')}
-                </p>
-                </div>
-            </section>
-            )}
-
-            <footer style={styles.footer}>
-            <p>{t('reportFooterText')}</p>
-            </footer>
-        </div>
-      </div>
-    );
+const checkAlertsAndNotify = (
+  lng: string,
+  currentSettings: CustomAlertSettings,
+  airData: AirQualityData,
+  t: (key: string, options?: any) => string,
+  toastFn: (options: any) => void
+) => {
+  console.log("DashboardClientContent: Checking custom alerts. Settings:", currentSettings, "AirData CO:", airData.co.value, "PM2.5:", airData.pm2_5.value);
+  if (currentSettings.co?.enabled && airData.co.value > currentSettings.co.threshold) {
+    toastFn({
+      title: t('customThresholdAlertTitle'),
+      description: t('customCOAlertDesc', {
+        value: airData.co.value.toFixed(2),
+        threshold: currentSettings.co.threshold.toFixed(2),
+        unit: 'ppm'
+      }),
+      variant: 'warning',
+    });
+     console.log("DashboardClientContent: CO custom alert triggered.");
   }
-);
 
-PrintableReport.displayName = 'PrintableReport';
-export default PrintableReport;
+  if (currentSettings.pm2_5?.enabled && airData.pm2_5.value > currentSettings.pm2_5.threshold) {
+    toastFn({
+      title: t('customThresholdAlertTitle'),
+      description: t('customPM25AlertDesc', {
+        value: airData.pm2_5.value.toFixed(0),
+        threshold: currentSettings.pm2_5.threshold.toFixed(0),
+        unit: 'µg/m³'
+      }),
+      variant: 'warning',
+    });
+    console.log("DashboardClientContent: PM2.5 custom alert triggered.");
+  }
+};
+
+
+export default function DashboardClientContent({
+  children,
+  lng,
+  initialCustomAlertSettings,
+}: DashboardClientContentProps) {
+  const { t } = useTranslation();
+  const { toast } = useToast();
+
+  const [date, setDate] = React.useState<DateRange | undefined>({
+    from: startOfDay(subDays(new Date(), 6)),
+    to: endOfDay(new Date()),
+  });
+
+  const [filteredHistoricalData, setFilteredHistoricalData] = React.useState<HistoricalDataPoint[]>([]);
+
+  useEffect(() => {
+    console.log("DashboardClientContent: Initial load effect triggered. initialCustomAlertSettings:", initialCustomAlertSettings);
+    if (initialCustomAlertSettings && MOCK_AIR_QUALITY_DATA && t && toast) {
+        checkAlertsAndNotify(lng, initialCustomAlertSettings, MOCK_AIR_QUALITY_DATA, t, toast);
+    }
+    // This toast was for AI analysis for PDF report, which is removed.
+    // A toast for AI Analyzer section loading is handled within AIAnalyzerSection itself or its parent.
+    // if(aiAnalysisForReport && toast && t) {
+    //     toast({ title: t('aiAnalysisUpdatedTitle'), description: t('aiAnalysisUpdatedDesc') });
+    // }
+  }, [initialCustomAlertSettings, lng, t, toast]);
+
+
+  React.useEffect(() => {
+    let newFilteredData: HistoricalDataPoint[] = [];
+    if (date?.from && date?.to) {
+      const startDate = startOfDay(date.from);
+      const endDate = endOfDay(date.to);
+      newFilteredData = ALL_MOCK_HISTORICAL_DATA.filter(point => {
+        try {
+          const pointDate = parseISO(point.timestamp);
+          return isWithinInterval(pointDate, { start: startDate, end: endDate });
+        } catch (e) {
+          console.warn("DashboardClientContent: Error parsing historical data timestamp", point.timestamp, e);
+          return false;
+        }
+      });
+    } else {
+      const defaultStartDate = startOfDay(subDays(new Date(), 6));
+      const defaultEndDate = endOfDay(new Date());
+       newFilteredData = ALL_MOCK_HISTORICAL_DATA.filter(point => {
+        try {
+          const pointDate = parseISO(point.timestamp);
+          return isWithinInterval(pointDate, { start: defaultStartDate, end: defaultEndDate });
+        } catch (e) {
+          console.warn("DashboardClientContent: Error parsing historical data timestamp (default range)", point.timestamp, e);
+          return false;
+        }
+      });
+    }
+    setFilteredHistoricalData(newFilteredData);
+  }, [date]);
+
+  return (
+    <div className="flex-1 space-y-6 p-4 md:p-6 lg:p-8">
+      <div className="flex flex-col sm:flex-row justify-end items-center gap-4 mb-6">
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              id="date"
+              variant={"outline"}
+              className={cn(
+                "w-full sm:w-[260px] justify-start text-left font-normal",
+                !date && "text-muted-foreground"
+              )}
+            >
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              {date?.from ? (
+                date.to ? (
+                  <>
+                    {format(date.from, "LLL dd, y")} -{" "}
+                    {format(date.to, "LLL dd, y")}
+                  </>
+                ) : (
+                  format(date.from, "LLL dd, y")
+                )
+              ) : (
+                <span>{t('pickDateRange')}</span>
+              )}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="end">
+            <Calendar
+              initialFocus
+              mode="range"
+              defaultMonth={date?.from}
+              selected={date}
+              onSelect={setDate}
+              numberOfMonths={2}
+              disabled={(d) => d > new Date() || d < subDays(new Date(), 60)}
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
+
+      <RealtimeDataGrid data={MOCK_AIR_QUALITY_DATA} />
+      <DataVisualization historicalData={filteredHistoricalData} />
+      <Suspense fallback={<AIAnalyzerSkeleton t={t} />}>
+        {children}
+      </Suspense>
+      {/* Hidden div for PDF rendering source is removed */}
+    </div>
+  );
+}

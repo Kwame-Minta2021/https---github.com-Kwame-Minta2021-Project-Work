@@ -1,24 +1,26 @@
 
 "use client";
+import { useRouter } from "next/navigation";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { FileDown, Bot, MessageSquareShare, Loader2 } from "lucide-react"; 
-// Ensure correct type import for PrintHandler based on its definition in DashboardLayout
-import type { PrintHandler } from '@/app/[lng]/dashboard/layout'; 
+import { Bot, MessageSquareShare, FileText, Loader2 } from "lucide-react"; 
 import { useTranslation } from 'react-i18next';
 
 interface HeaderProps {
-  onPrint: PrintHandler; // Ensure this matches: () => Promise<void>
   onToggleChatbot: () => void;
   onSendSmsReport: () => Promise<void>; 
   isSendingSms: boolean; 
-  isGeneratingPdf: boolean; 
-  isPrintReady: boolean; 
   lng: string; 
 }
 
-export function Header({ onPrint, onToggleChatbot, onSendSmsReport, isSendingSms, isGeneratingPdf, isPrintReady, lng }: HeaderProps) {
+export function Header({ onToggleChatbot, onSendSmsReport, isSendingSms, lng }: HeaderProps) {
   const { t } = useTranslation();
+  const router = useRouter();
+
+  const handleViewReport = () => {
+    router.push(`/${lng}/view-report`);
+  };
+
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-md sm:px-6">
       <SidebarTrigger className="md:hidden" />
@@ -39,13 +41,9 @@ export function Header({ onPrint, onToggleChatbot, onSendSmsReport, isSendingSms
           <Bot className="mr-2 h-4 w-4" />
           {t('aiChatbot')}
         </Button>
-        <Button variant="outline" size="sm" onClick={onPrint} disabled={!isPrintReady || isGeneratingPdf}>
-          {isGeneratingPdf ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <FileDown className="mr-2 h-4 w-4" />
-          )}
-          {t('generatePdf')}
+        <Button variant="outline" size="sm" onClick={handleViewReport}>
+          <FileText className="mr-2 h-4 w-4" />
+          {t('viewUpdatedReport')}
         </Button>
         <Button variant="outline" size="sm" onClick={onSendSmsReport} disabled={isSendingSms}>
           {isSendingSms ? (
@@ -59,5 +57,3 @@ export function Header({ onPrint, onToggleChatbot, onSendSmsReport, isSendingSms
     </header>
   );
 }
-
-    

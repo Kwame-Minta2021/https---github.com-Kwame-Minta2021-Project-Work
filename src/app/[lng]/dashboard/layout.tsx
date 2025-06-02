@@ -47,9 +47,6 @@ import { analyzeAirQuality, type AnalyzeAirQualityInput } from '@/ai/flows/analy
 import { sendSmsReport, type SendSmsReportInput } from '@/ai/flows/send-sms-report-flow';
 import type { CustomAlertSettings } from '@/types';
 
-export type PrintHandler = () => Promise<void>; 
-export type SetPrintHandlerType = (handler: PrintHandler | null) => void;
-
 const LS_KEY_CUSTOM_THRESHOLDS = 'breatheEasyCustomAlertThresholds';
 
 interface DashboardLayoutProps {
@@ -73,11 +70,8 @@ export default function DashboardLayout({
     }
   }, [currentLng, i18n]);
   
-  const printRef = React.useRef<PrintHandler | null>(null);
-  const [isPrintReady, setIsPrintReady] = React.useState(false);
   const [isChatbotOpen, setIsChatbotOpen] = React.useState(false);
   const [isSendingSms, setIsSendingSms] = React.useState(false);
-  const [isGeneratingPdf, setIsGeneratingPdf] = React.useState(false);
   const [isThresholdModalOpen, setIsThresholdModalOpen] = React.useState(false);
   const [customAlertSettings, setCustomAlertSettings] = React.useState<CustomAlertSettings>({});
   const { setTheme } = useTheme();
@@ -101,50 +95,6 @@ export default function DashboardLayout({
     } catch (error) {
       console.error("Error saving custom alert settings to localStorage:", error);
       toast({ variant: "destructive", title: t('errorSavingSettingsTitle'), description: t('errorSavingSettingsDesc') });
-    }
-  };
-
-  const setPrintHandlerCallback = React.useCallback<SetPrintHandlerType>((handler) => {
-    printRef.current = handler;
-    const ready = !!handler;
-    setIsPrintReady(ready);
-    if (ready) {
-      console.log("DashboardLayout: Print handler has been SET by child. isPrintReady:", ready);
-    } else {
-      console.log("DashboardLayout: Print handler has been UNSET by child. isPrintReady:", ready);
-    }
-  }, []);
-
-
-  const handlePrint = async () => {
-    console.log("DashboardLayout: handlePrint triggered. isPrintReady:", isPrintReady, "printRef.current exists:", !!printRef.current, "isGeneratingPdf:", isGeneratingPdf);
-    if (isGeneratingPdf) {
-      console.warn("DashboardLayout: PDF generation is already in progress.");
-      toast({ variant: "warning", title: t('pdfGenerationInProgressTitle'), description: t('pdfGenerationInProgressDesc') });
-      return;
-    }
-    if (isPrintReady && printRef.current) {
-      setIsGeneratingPdf(true);
-      try {
-        await printRef.current();
-        console.log("DashboardLayout: PDF generation initiated by handler.");
-      } catch (error) {
-        console.error("DashboardLayout: Error during PDF generation:", error);
-        toast({
-          variant: "destructive",
-          title: t('pdfGenerationErrorTitle'),
-          description: t('pdfGenerationErrorDescription') + (error instanceof Error ? `: ${error.message}` : ''),
-        });
-      } finally {
-        setIsGeneratingPdf(false);
-      }
-    } else {
-      console.warn("DashboardLayout: Print action called but not ready. isPrintReady:", isPrintReady, "printRef.current exists:", !!printRef.current);
-      toast({
-        variant: "warning",
-        title: t('reportFeatureNotReadyTitle'),
-        description: t('reportFeatureNotReadyDesc'),
-      });
     }
   };
   
@@ -281,16 +231,12 @@ export default function DashboardLayout({
       </Sidebar>
       <SidebarInset>
         <Header 
-          onPrint={handlePrint} 
           onToggleChatbot={toggleChatbot}
           onSendSmsReport={handleSendSmsReport} 
           isSendingSms={isSendingSms} 
-          isGeneratingPdf={isGeneratingPdf}
-          isPrintReady={isPrintReady} 
           lng={currentLng}
         />
         {React.cloneElement(children as React.ReactElement, { 
-          setPrintHandler: setPrintHandlerCallback, 
           lng: currentLng,
           customAlertSettings: customAlertSettings
         })}

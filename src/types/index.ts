@@ -1,5 +1,8 @@
 
 import type { LucideIcon } from 'lucide-react';
+import type { GenerateLocalityReportInput, GenerateLocalityReportOutput } from '@/ai/flows/generate-locality-report-flow';
+import type { ForecastAirQualityInput, ForecastAirQualityOutput } from '@/ai/flows/forecast-air-quality-flow';
+
 
 export interface SensorReadingThresholds {
   moderate: number;
@@ -44,3 +47,6 @@ export interface CustomAlertSettings {
   pm2_5?: Omit<CustomAlertThreshold, 'pollutantId' | 'unit'> & { unit: 'µg/m³' };
 }
 
+// Export types for new flows
+export type { GenerateLocalityReportInput, GenerateLocalityReportOutput };
+export type { ForecastAirQualityInput, ForecastAirQualityOutput };
