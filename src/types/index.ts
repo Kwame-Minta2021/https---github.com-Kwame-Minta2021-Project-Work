@@ -31,3 +31,16 @@ export interface HistoricalDataPoint {
   timestamp: string; // ISO date string e.g. "2024-07-15T10:00:00.000Z"
   [pollutant: string]: number | string; // e.g., PM25: 10, CO: 0.5
 }
+
+export interface CustomAlertThreshold {
+  pollutantId: 'co' | 'pm2_5'; // Add other pollutants as needed
+  threshold: number;
+  unit: string;
+  enabled: boolean;
+}
+
+export interface CustomAlertSettings {
+  co?: Omit<CustomAlertThreshold, 'pollutantId' | 'unit'> & { unit: 'ppm' };
+  pm2_5?: Omit<CustomAlertThreshold, 'pollutantId' | 'unit'> & { unit: 'µg/m³' };
+}
+

@@ -2,13 +2,12 @@
 // src/components/dashboard/dashboard-client-content.tsx
 'use client';
 
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Suspense } from 'react';
 import { DateRange } from 'react-day-picker';
 import { subDays, format, parseISO, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next'; 
-// Dynamic import for html2pdf.js will be used inside useEffect
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -19,7 +18,7 @@ import RealtimeDataGrid from '@/components/dashboard/realtime-data-grid';
 import DataVisualization from '@/components/dashboard/data-visualization';
 import PrintableReport from '@/components/dashboard/printable-report';
 import { MOCK_AIR_QUALITY_DATA, MOCK_HISTORICAL_DATA as ALL_MOCK_HISTORICAL_DATA } from '@/lib/constants';
-import type { HistoricalDataPoint } from '@/types';
+import type { HistoricalDataPoint, CustomAlertSettings } from '@/types';
 import type { AnalyzeAirQualityOutput } from '@/ai/flows/analyze-air-quality';
 import type { SetPrintHandlerType } from '@/app/[lng]/dashboard/layout'; 
 import { cn } from '@/lib/utils';
@@ -29,6 +28,8 @@ interface DashboardClientContentProps {
   aiAnalysisForReport: AnalyzeAirQualityOutput | null;
   children: React.ReactNode; 
   lng: string;
+  initialCustomAlertSettings: CustomAlertSettings;
+  onInitialLoad: (currentSettings: CustomAlertSettings) => void;
 }
 
 function AIAnalyzerSkeleton({ t }: { t: (key: string) => string }) {
@@ -66,6 +67,8 @@ export default function DashboardClientContent({
   aiAnalysisForReport,
   children,
   lng, 
+  initialCustomAlertSettings,
+  onInitialLoad,
 }: DashboardClientContentProps) {
   const { t } = useTranslation(); 
   const reportContentRef = React.useRef<HTMLDivElement>(null);
@@ -76,10 +79,13 @@ export default function DashboardClientContent({
   });
 
   const [filteredHistoricalData, setFilteredHistoricalData] = React.useState<HistoricalDataPoint[]>([]);
+  const [html2pdfInstance, setHtml2pdfInstance] = useState<any>(null);
+  const [isPdfLibReady, setIsPdfLibReady] = useState(false);
 
-  // State for html2pdf.js library
-  const [html2pdfInstance, setHtml2pdfInstance] = React.useState<any>(null);
-  const [isPdfLibReady, setIsPdfLibReady] = React.useState(false);
+  useEffect(() => {
+    onInitialLoad(initialCustomAlertSettings);
+  }, [initialCustomAlertSettings, onInitialLoad]);
+
 
   React.useEffect(() => {
     let newFilteredData: HistoricalDataPoint[] = [];
@@ -111,27 +117,23 @@ export default function DashboardClientContent({
     setFilteredHistoricalData(newFilteredData);
   }, [date]);
 
-  // Effect to load html2pdf.js once
-  React.useEffect(() => {
+  useEffect(() => {
     console.log("DashboardClientContent: Attempting to load html2pdf.js");
     import('html2pdf.js')
       .then(module => {
-        setHtml2pdfInstance(() => module.default); // module.default is the actual html2pdf function
+        setHtml2pdfInstance(() => module.default);
         setIsPdfLibReady(true);
         console.log("DashboardClientContent: html2pdf.js loaded successfully and stored in state.");
       })
       .catch(err => {
         console.error("DashboardClientContent: Failed to load html2pdf.js", err);
         if (typeof setPrintHandler === 'function') {
-          setPrintHandler(null); // Ensure button is disabled if library fails to load
+          setPrintHandler(null); 
         }
       });
-  // setPrintHandler is stable, only run this effect once on mount basically
-  // or if setPrintHandler itself were to change, which is unlikely.
   }, [setPrintHandler]);
 
-  // Effect to set the print handler once html2pdf.js is loaded AND reportContentRef is available
-  React.useEffect(() => {
+  useEffect(() => {
     console.log(
       "DashboardClientContent: Print handler setup effect. isPdfLibReady:", isPdfLibReady,
       "html2pdfInstance available:", !!html2pdfInstance,
@@ -154,7 +156,7 @@ export default function DashboardClientContent({
             console.log("DashboardClientContent: Element to print:", element);
 
             const opt = {
-              margin:       0.5, // inches
+              margin:       0.5, 
               filename:     filename,
               image:        { type: 'jpeg', quality: 0.98 },
               html2canvas:  { scale: 2, useCORS: true, logging: false, letterRendering: true, width: element.scrollWidth, height: element.scrollHeight },
@@ -163,7 +165,6 @@ export default function DashboardClientContent({
             };
 
             try {
-              // html2pdfInstance is the function itself
               await html2pdfInstance().from(element).set(opt).save();
               console.log("DashboardClientContent: PDF generation and download initiated.");
             } catch (pdfError) {
@@ -180,7 +181,7 @@ export default function DashboardClientContent({
         console.log("DashboardClientContent: PDF generation handler (using html2pdf.js) has been SET.");
       } else {
         console.warn("DashboardClientContent: Conditions NOT met for setting print handler. isPdfLibReady:", isPdfLibReady, "hasRef:", !!reportContentRef.current, "hasInstance:",!!html2pdfInstance, ". Print handler not set (or reset).");
-        setPrintHandler(null); // Set to null if not all conditions are met
+        setPrintHandler(null); 
       }
 
       return () => {
@@ -190,11 +191,14 @@ export default function DashboardClientContent({
         }
       };
     }
-  // This effect depends on the PDF library being ready, the instance being available,
-  // and contextual things like setPrintHandler, t, lng.
-  // It will re-run if isPdfLibReady or html2pdfInstance changes.
-  // The check for reportContentRef.current happens inside.
   }, [isPdfLibReady, html2pdfInstance, setPrintHandler, t, lng]); 
+
+  const selectedDateRangeString = date?.from && date?.to 
+    ? `${format(date.from, "LLL dd, y")} - ${format(date.to, "LLL dd, y")}`
+    : date?.from 
+    ? format(date.from, "LLL dd, y")
+    : t('noDateRangeSelected');
+
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-6 lg:p-8">
@@ -244,17 +248,15 @@ export default function DashboardClientContent({
         {children}
       </Suspense>
       
-      {/* This div is positioned off-screen and used by html2pdf.js to generate the report */}
       <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', width: '8.5in', backgroundColor: 'white', color: '#333' }} id="pdf-render-source-container">
         <PrintableReport 
             ref={reportContentRef} 
             airQualityData={MOCK_AIR_QUALITY_DATA} 
             aiAnalysis={aiAnalysisForReport} 
-            lng={lng} 
+            lng={lng}
+            selectedDateRange={selectedDateRangeString} 
         />
       </div>
     </div>
   );
 }
-
-    

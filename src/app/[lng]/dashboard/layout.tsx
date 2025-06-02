@@ -29,8 +29,9 @@ import {
 } from "@/components/ui/sidebar";
 import { Header } from "@/components/layout/header";
 import { SidebarNav } from "@/components/layout/sidebar-nav";
-import { Settings, Sun, Moon, Laptop, Languages } from "lucide-react"; 
+import { Settings, Sun, Moon, Laptop, Languages, BellDot } from "lucide-react"; 
 import AIChatbot from "@/components/dashboard/ai-chatbot"; 
+import ThresholdSettingsModal from "@/components/dashboard/threshold-settings-modal";
 import { MOCK_AIR_QUALITY_DATA } from "@/lib/constants";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { useTheme } from "next-themes";
@@ -44,11 +45,12 @@ import Cookies from 'js-cookie';
 import { useToast } from "@/hooks/use-toast";
 import { analyzeAirQuality, type AnalyzeAirQualityInput } from '@/ai/flows/analyze-air-quality';
 import { sendSmsReport, type SendSmsReportInput } from '@/ai/flows/send-sms-report-flow';
-
+import type { CustomAlertSettings } from '@/types';
 
 export type PrintHandler = () => Promise<void>; 
 export type SetPrintHandlerType = (handler: PrintHandler | null) => void;
 
+const LS_KEY_CUSTOM_THRESHOLDS = 'breatheEasyCustomAlertThresholds';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -76,7 +78,31 @@ export default function DashboardLayout({
   const [isChatbotOpen, setIsChatbotOpen] = React.useState(false);
   const [isSendingSms, setIsSendingSms] = React.useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = React.useState(false);
+  const [isThresholdModalOpen, setIsThresholdModalOpen] = React.useState(false);
+  const [customAlertSettings, setCustomAlertSettings] = React.useState<CustomAlertSettings>({});
   const { setTheme } = useTheme();
+
+
+  React.useEffect(() => {
+    try {
+      const storedSettings = localStorage.getItem(LS_KEY_CUSTOM_THRESHOLDS);
+      if (storedSettings) {
+        setCustomAlertSettings(JSON.parse(storedSettings));
+      }
+    } catch (error) {
+      console.error("Error loading custom alert settings from localStorage:", error);
+    }
+  }, []);
+
+  const handleSaveThresholdSettings = (settings: CustomAlertSettings) => {
+    try {
+      localStorage.setItem(LS_KEY_CUSTOM_THRESHOLDS, JSON.stringify(settings));
+      setCustomAlertSettings(settings);
+    } catch (error) {
+      console.error("Error saving custom alert settings to localStorage:", error);
+      toast({ variant: "destructive", title: t('errorSavingSettingsTitle'), description: t('errorSavingSettingsDesc') });
+    }
+  };
 
   const setPrintHandlerCallback = React.useCallback<SetPrintHandlerType>((handler) => {
     printRef.current = handler;
@@ -94,7 +120,7 @@ export default function DashboardLayout({
     console.log("DashboardLayout: handlePrint triggered. isPrintReady:", isPrintReady, "printRef.current exists:", !!printRef.current, "isGeneratingPdf:", isGeneratingPdf);
     if (isGeneratingPdf) {
       console.warn("DashboardLayout: PDF generation is already in progress.");
-      alert(t('pdfGenerationInProgress') || "PDF generation is already in progress. Please wait.");
+      toast({ variant: "warning", title: t('pdfGenerationInProgressTitle'), description: t('pdfGenerationInProgressDesc') });
       return;
     }
     if (isPrintReady && printRef.current) {
@@ -106,15 +132,19 @@ export default function DashboardLayout({
         console.error("DashboardLayout: Error during PDF generation:", error);
         toast({
           variant: "destructive",
-          title: t('pdfGenerationErrorTitle') || "PDF Generation Error",
-          description: t('pdfGenerationErrorDescription') || "Could not generate PDF. Please try again.",
+          title: t('pdfGenerationErrorTitle'),
+          description: t('pdfGenerationErrorDescription') + (error instanceof Error ? `: ${error.message}` : ''),
         });
       } finally {
         setIsGeneratingPdf(false);
       }
     } else {
       console.warn("DashboardLayout: Print action called but not ready. isPrintReady:", isPrintReady, "printRef.current exists:", !!printRef.current);
-      alert(t('reportFeatureNotReady') || "Report generation feature is currently unavailable or not fully initialized. Please try again shortly.");
+      toast({
+        variant: "warning",
+        title: t('reportFeatureNotReadyTitle'),
+        description: t('reportFeatureNotReadyDesc'),
+      });
     }
   };
   
@@ -195,6 +225,13 @@ export default function DashboardLayout({
         </SidebarContent>
         <SidebarFooter className="p-2">
            <SidebarMenu>
+             <SidebarMenuItem onClick={() => setIsThresholdModalOpen(true)}>
+                <SidebarMenuButton tooltip={{children: t('notificationSettingsTooltip'), side: "right", align: "center"}}>
+                    <BellDot />
+                    <span>{t('notificationSettings')}</span>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuItem>
@@ -254,7 +291,8 @@ export default function DashboardLayout({
         />
         {React.cloneElement(children as React.ReactElement, { 
           setPrintHandler: setPrintHandlerCallback, 
-          lng: currentLng 
+          lng: currentLng,
+          customAlertSettings: customAlertSettings
         })}
       </SidebarInset>
 
@@ -279,8 +317,12 @@ export default function DashboardLayout({
           />
         </SheetContent>
       </Sheet>
+      <ThresholdSettingsModal
+        isOpen={isThresholdModalOpen}
+        onOpenChange={setIsThresholdModalOpen}
+        initialSettings={customAlertSettings}
+        onSettingsSave={handleSaveThresholdSettings}
+      />
     </SidebarProvider>
   );
 }
-
-    
