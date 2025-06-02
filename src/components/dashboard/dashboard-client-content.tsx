@@ -1,14 +1,13 @@
+
 // src/components/dashboard/dashboard-client-content.tsx
 'use client';
 
-import *الوصف: مواءمة حالة `isPrintReady` عن طريق ضبط تبعيات `useEffect` في `DashboardClientContent` وتحسين سجلات وحدة التحكم والتنبيهات.
-React from 'react';
+import React from 'react';
 import { Suspense } from 'react';
 import { DateRange } from 'react-day-picker';
 import { subDays, format, parseISO, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next'; 
-// import html2pdf from 'html2pdf.js'; // Removed static import, will be dynamically imported
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -87,10 +86,12 @@ export default function DashboardClientContent({
           const pointDate = parseISO(point.timestamp);
           return isWithinInterval(pointDate, { start: startDate, end: endDate });
         } catch (e) {
+          console.warn("DashboardClientContent: Error parsing historical data timestamp", point.timestamp, e);
           return false;
         }
       });
     } else {
+      // Default to last 7 days if date range is not fully set
       const defaultStartDate = startOfDay(subDays(new Date(), 6));
       const defaultEndDate = endOfDay(new Date());
        newFilteredData = ALL_MOCK_HISTORICAL_DATA.filter(point => {
@@ -98,6 +99,7 @@ export default function DashboardClientContent({
           const pointDate = parseISO(point.timestamp);
           return isWithinInterval(pointDate, { start: defaultStartDate, end: defaultEndDate });
         } catch (e) {
+          console.warn("DashboardClientContent: Error parsing historical data timestamp (default range)", point.timestamp, e);
           return false;
         }
       });
@@ -106,65 +108,67 @@ export default function DashboardClientContent({
   }, [date]);
 
   React.useEffect(() => {
-    console.log("DashboardClientContent: useEffect for print handler setup running. typeof setPrintHandler:", typeof setPrintHandler, "reportContentRef.current exists:", !!reportContentRef.current);
+    console.log("DashboardClientContent: useEffect for print handler setup. typeof setPrintHandler:", typeof setPrintHandler, "reportContentRef.current available:", !!reportContentRef.current, "lng:", lng);
 
-    if (typeof setPrintHandler === 'function' && reportContentRef.current) {
-      const handleGeneratePdf = async () => {
-        console.log("DashboardClientContent: Attempting to generate PDF with html2pdf.js...");
-        
-        const html2pdf = (await import('html2pdf.js')).default;
-
-        if (reportContentRef.current && html2pdf) {
-          const element = reportContentRef.current;
-          const timestamp = format(new Date(), 'yyyyMMdd_HHmmss');
-          const filename = `BreatheEasy_Report_${timestamp}.pdf`;
+    if (typeof setPrintHandler === 'function') {
+      if (reportContentRef.current) {
+        const handleGeneratePdf = async () => {
+          console.log("DashboardClientContent: Attempting to generate PDF with html2pdf.js. reportContentRef exists:", !!reportContentRef.current);
           
-          const opt = {
-            margin:       0.5, // inches
-            filename:     filename,
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, useCORS: true, logging: false, letterRendering: true, width: element.scrollWidth, height: element.scrollHeight },
-            jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
-            pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
-          };
+          const html2pdfModule = await import('html2pdf.js');
+          const html2pdf = html2pdfModule.default;
 
-          try {
-            await html2pdf().from(element).set(opt).save();
-            console.log("DashboardClientContent: PDF generation and download initiated.");
-          } catch (pdfError) {
-            console.error("DashboardClientContent: html2pdf.js error:", pdfError);
-            alert(t('pdfGenerationErrorGeneric') || "An error occurred while generating the PDF.");
+          if (reportContentRef.current && html2pdf) {
+            const element = reportContentRef.current;
+            const timestamp = format(new Date(), 'yyyyMMdd_HHmmss');
+            const filename = `BreatheEasy_Report_${timestamp}.pdf`;
+            
+            console.log("DashboardClientContent: html2pdf.js loaded. Element to print:", element);
+
+            const opt = {
+              margin:       0.5, // inches
+              filename:     filename,
+              image:        { type: 'jpeg', quality: 0.98 },
+              html2canvas:  { scale: 2, useCORS: true, logging: false, letterRendering: true, width: element.scrollWidth, height: element.scrollHeight },
+              jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
+              pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+            };
+
+            try {
+              await html2pdf().from(element).set(opt).save();
+              console.log("DashboardClientContent: PDF generation and download initiated.");
+            } catch (pdfError) {
+              console.error("DashboardClientContent: html2pdf.js error:", pdfError);
+              alert(t('pdfGenerationErrorGeneric') || "An error occurred while generating the PDF.");
+            }
+          } else {
+            console.error('DashboardClientContent: Printable report content ref is not available or html2pdf failed to load. reportContentRef:', reportContentRef.current, "html2pdf library:", html2pdf);
+            alert(t('reportContentMissingError') || 'Error: Report content not found or PDF library failed. Cannot generate PDF.');
           }
-        } else {
-          console.error('DashboardClientContent: Printable report content ref is not available or html2pdf failed to load.');
-          alert(t('reportContentMissingError') || 'Error: Report content not found or PDF library failed. Cannot generate PDF.');
-        }
-      };
-      
-      setPrintHandler(handleGeneratePdf);
-      console.log("DashboardClientContent: PDF generation handler (using html2pdf.js) has been SET.");
-      
-      return () => {
-        setPrintHandler(null);
-        console.log("DashboardClientContent: PDF generation handler has been UNSET.");
-      };
-
+        };
+        
+        setPrintHandler(handleGeneratePdf);
+        console.log("DashboardClientContent: PDF generation handler (using html2pdf.js) has been SET.");
+        
+        return () => {
+          setPrintHandler(null);
+          console.log("DashboardClientContent: PDF generation handler has been UNSET (cleanup).");
+        };
+      } else {
+        console.warn("DashboardClientContent: reportContentRef.current is NOT available YET. Print handler not set. This is normal on initial mount or if child hasn't rendered ref yet.");
+        setPrintHandler(null); 
+      }
     } else {
-      if (typeof setPrintHandler !== 'function') {
-        console.warn("DashboardClientContent: setPrintHandler prop is not a function. Print functionality will be disabled.");
-      }
-      if (!reportContentRef.current) {
-        // This might happen on initial render before the ref is attached. The effect should re-run when refs are stable.
-        console.warn("DashboardClientContent: reportContentRef.current is not available on this effect run. Print functionality may be delayed.");
-      }
-      // Ensure to clear the handler if conditions aren't met
-      if (typeof setPrintHandler === 'function') {
-         setPrintHandler(null);
-         console.log("DashboardClientContent: Conditions for setting print handler not met, handler UNSET.");
+      console.warn("DashboardClientContent: setPrintHandler prop is not a function. Print functionality will be disabled.");
+      if (typeof setPrintHandler === 'function') { // Defensive check, though covered by outer if
+        setPrintHandler(null);
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setPrintHandler, t, lng]); // Removed aiAnalysisForReport from dependencies, reportContentRef.current is checked inside
+  // Using lng and t in the dependency array for cases where translations might affect the PDF filename or error messages.
+  // setPrintHandler is also a dependency.
+  // We deliberately EXCLUDE aiAnalysisForReport to prevent re-setting the handler unnecessarily when only AI data changes.
+  // The PDF report will re-render with new aiAnalysisForReport via normal React rendering flow.
+  }, [setPrintHandler, t, lng, reportContentRef]); 
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-6 lg:p-8">
@@ -214,9 +218,10 @@ export default function DashboardClientContent({
         {children}
       </Suspense>
       
-      <div ref={reportContentRef} id="printable-report-content-for-html2pdf" style={{ position: 'absolute', left: '-9999px', top: '-9999px', width: '8.5in', backgroundColor: 'white', color: '#333' }}>
-        <PrintableReport airQualityData={MOCK_AIR_QUALITY_DATA} aiAnalysis={aiAnalysisForReport} lng={lng} />
+      <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', width: '8.5in', backgroundColor: 'white', color: '#333' }}>
+        <PrintableReport ref={reportContentRef} airQualityData={MOCK_AIR_QUALITY_DATA} aiAnalysis={aiAnalysisForReport} lng={lng} />
       </div>
     </div>
   );
 }
+
