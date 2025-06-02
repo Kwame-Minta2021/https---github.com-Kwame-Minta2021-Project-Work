@@ -65,8 +65,9 @@ const analyzeAirQualityFlow = ai.defineFlow(
     outputSchema: AnalyzeAirQualityOutputSchema,
   },
   async (input) => {
-    const MAX_ATTEMPTS = 3; // Total attempts: 1 initial + 2 retries
+    const MAX_ATTEMPTS = 4; // Increased: 1 initial + 3 retries
     let attempts = 0;
+    let lastError: any = null;
 
     while (attempts < MAX_ATTEMPTS) {
       try {
@@ -74,22 +75,30 @@ const analyzeAirQualityFlow = ai.defineFlow(
         return output!;
       } catch (error: any) {
         attempts++;
+        lastError = error; // Store the last error
         const errorMessage = typeof error.message === 'string' ? error.message.toLowerCase() : '';
         const isRetriableError = errorMessage.includes('503') || errorMessage.includes('overloaded') || errorMessage.includes('service unavailable');
 
         if (isRetriableError && attempts < MAX_ATTEMPTS) {
-          console.warn(`analyzeAirQualityFlow attempt ${attempts} failed due to model overload. Retrying in ${attempts * 1000}ms...`);
-          await new Promise(resolve => setTimeout(resolve, 1000 * attempts)); // Wait (1s, 2s for 2nd and 3rd attempt)
+          // Using attempts for backoff: 1s, 2s, 3s for subsequent retries
+          const delay = 1000 * attempts; 
+          console.warn(`analyzeAirQualityFlow attempt ${attempts} failed due to model overload. Retrying in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
         } else {
           // Not a retriable error or max retries reached
-          console.error(`analyzeAirQualityFlow failed after ${attempts} attempts. Last error:`, error);
-          throw error;
+          console.error(`analyzeAirQualityFlow failed after ${attempts} attempts. Last error:`, lastError);
+          throw lastError; // Re-throw the last recorded error
         }
       }
     }
-    // This fallback should theoretically not be reached given MAX_ATTEMPTS > 0
-    // and the logic re-throwing the error. It's here for exhaustive error handling.
-    throw new Error("analyzeAirQualityFlow failed after max retries and did not correctly throw the last error.");
+    // This fallback should theoretically not be reached if logic above is correct
+    // but as a safeguard, throw the last known error or a generic one.
+    if (lastError) {
+        console.error(`analyzeAirQualityFlow ultimately failed after ${attempts} attempts. Last error:`, lastError);
+        throw lastError;
+    }
+    // This should be extremely rare if lastError is always set in catch block.
+    throw new Error("analyzeAirQualityFlow failed after max retries. Unknown error during retry loop.");
   }
 );
 
