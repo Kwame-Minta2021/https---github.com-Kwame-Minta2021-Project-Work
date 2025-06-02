@@ -62,7 +62,37 @@ const forecastAirQualityFlow = ai.defineFlow(
     outputSchema: ForecastAirQualityOutputSchema,
   },
   async (input) => {
-    const {output} = await forecastPrompt(input);
-    return output!;
+    const MAX_ATTEMPTS = 5; // 1 initial + 4 retries
+    let attempts = 0;
+    let lastError: any = null;
+
+    while (attempts < MAX_ATTEMPTS) {
+      try {
+        const {output} = await forecastPrompt(input);
+        return output!;
+      } catch (error: any) {
+        attempts++;
+        lastError = error;
+        const errorMessage = typeof error.message === 'string' ? error.message.toLowerCase() : '';
+        const isRetriableError = errorMessage.includes('503') || errorMessage.includes('overloaded') || errorMessage.includes('service unavailable');
+
+        if (isRetriableError && attempts < MAX_ATTEMPTS) {
+          const delay = 1000 * attempts; // e.g., 1s, 2s, 3s, 4s
+          console.warn(`forecastAirQualityFlow attempt ${attempts} (max ${MAX_ATTEMPTS}) failed due to model overload. Retrying in ${delay / 1000}s...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        } else {
+          console.error(`forecastAirQualityFlow failed after ${attempts} attempt(s). Last error:`, lastError);
+          throw lastError;
+        }
+      }
+    }
+    // This should only be reached if MAX_ATTEMPTS is 0 or loop logic is flawed,
+    // but as a fallback, rethrow the last known error.
+    if (lastError) {
+        console.error(`forecastAirQualityFlow ultimately failed after ${attempts} attempts. Last error:`, lastError);
+        throw lastError;
+    }
+    // Should not happen if MAX_ATTEMPTS > 0
+    throw new Error("forecastAirQualityFlow failed after max retries without a specific caught error.");
   }
 );
