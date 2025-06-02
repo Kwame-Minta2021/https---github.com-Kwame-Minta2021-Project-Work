@@ -3,17 +3,17 @@ import { analyzeAirQuality, type AnalyzeAirQualityInput, type AnalyzeAirQualityO
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { AlertCircle, CheckCircle2, Brain } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getTranslations } from '@/i18n'; 
+import { getTranslations } from '@/i18n';
 
 interface AIAnalyzerSectionProps {
-  readings: Omit<AnalyzeAirQualityInput, 'language'>; // Receives raw readings without language
-  lng: string; 
+  readings: Omit<AnalyzeAirQualityInput, 'language'>;
+  lng: string;
 }
 
 export default async function AIAnalyzerSection({ readings, lng }: AIAnalyzerSectionProps) {
-  const { t } = await getTranslations(lng, 'common'); 
+  const { t } = await getTranslations(lng, 'common');
   let analysis: AnalyzeAirQualityOutput | null = null;
-  let error = null;
+  let caughtError: any = null;
 
   const aiInputWithLanguage: AnalyzeAirQualityInput = {
     ...readings,
@@ -24,34 +24,59 @@ export default async function AIAnalyzerSection({ readings, lng }: AIAnalyzerSec
     analysis = await analyzeAirQuality(aiInputWithLanguage);
   } catch (e) {
     console.error("AI Analyzer Error:", e);
-    error = e instanceof Error ? e.message : "An unknown error occurred during AI analysis.";
-    // Provide default empty strings for analysis in case of error to avoid undefined access
-    analysis = { effectOnHumanHealth: "", bestActionToReducePresence: "" }; 
+    caughtError = e;
+    analysis = { effectOnHumanHealth: "", bestActionToReducePresence: "" };
   }
 
-  if (error) {
+  if (caughtError) {
+    let displayMessage = t('errorUnknown');
+    let isOverloadedError = false;
+    let errorTitle = t('errorAnalyzingAirQuality');
+    let errorSuggestion = t('errorTryAgain');
+
+    if (caughtError instanceof Error) {
+      displayMessage = caughtError.message;
+      if (caughtError.message.includes("503") ||
+          caughtError.message.toLowerCase().includes("overloaded") ||
+          caughtError.message.toLowerCase().includes("service unavailable")) {
+        isOverloadedError = true;
+      }
+    } else if (typeof caughtError === 'string') {
+      displayMessage = caughtError;
+      if (caughtError.includes("503") ||
+          caughtError.toLowerCase().includes("overloaded") ||
+          caughtError.toLowerCase().includes("service unavailable")) {
+        isOverloadedError = true;
+      }
+    }
+
+    if (isOverloadedError) {
+      errorTitle = t('errorModelOverloadedTitle');
+      errorSuggestion = t('errorModelOverloadedSuggestion');
+    }
+
     return (
-      <section id="analyzer" className="mb-8 scroll-mt-20">
+      <section id="analyzer-error" className="mb-8 scroll-mt-20">
         <h2 className="text-2xl font-semibold tracking-tight mb-4">{t('aiAnalyzer')}</h2>
         <Card className="shadow-lg bg-destructive/10 border-destructive">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-destructive">
               <AlertCircle className="h-6 w-6" />
-              {t('errorAnalyzingAirQuality')}
+              {errorTitle}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-destructive-foreground">{error}</p>
-            <p className="text-sm text-muted-foreground mt-2">{t('errorTryAgain')}</p>
+            <p className="text-destructive-foreground">{displayMessage}</p>
+            <p className="text-sm text-muted-foreground mt-2">{errorSuggestion}</p>
           </CardContent>
         </Card>
       </section>
     );
   }
-  
+
   if (!analysis || (!analysis.effectOnHumanHealth && !analysis.bestActionToReducePresence)) {
      return (
-      <section id="analyzer" className="mb-8 scroll-mt-20">
+      <section id="analyzer-skeleton" className="mb-8 scroll-mt-20">
         <h2 className="text-2xl font-semibold tracking-tight mb-4">{t('aiAnalyzer')}</h2>
         <Card className="shadow-lg">
           <CardHeader>
@@ -99,7 +124,7 @@ export default async function AIAnalyzerSection({ readings, lng }: AIAnalyzerSec
               {t('effectOnHumanHealth')}
             </h3>
             <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-line">
-              {analysis.effectOnHumanHealth || "No specific health impact information available at this moment."}
+              {analysis.effectOnHumanHealth || t('reportNoHealthImpactData')}
             </p>
           </div>
           <hr className="my-4 border-border" />
@@ -109,7 +134,7 @@ export default async function AIAnalyzerSection({ readings, lng }: AIAnalyzerSec
               {t('bestActionToReducePresence')}
             </h3>
             <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-line">
-              {analysis.bestActionToReducePresence || "No specific recommendations available at this moment."}
+              {analysis.bestActionToReducePresence || t('reportNoRecommendationsData')}
             </p>
           </div>
         </CardContent>
@@ -117,4 +142,3 @@ export default async function AIAnalyzerSection({ readings, lng }: AIAnalyzerSec
     </section>
   );
 }
-

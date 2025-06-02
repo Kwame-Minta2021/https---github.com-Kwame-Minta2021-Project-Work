@@ -81,5 +81,8 @@
   "reportToControlUnit": "Rapporter à l'Unité de Contrôle",
   "smsReportStatus": "Statut du Rapport SMS",
   "smsReportErrorTitle": "Erreur Rapport SMS",
-  "smsReportErrorDescription": "Échec de l'envoi du rapport SMS. Vérifiez la console pour les détails."
+  "smsReportErrorDescription": "Échec de l'envoi du rapport SMS. Vérifiez la console pour les détails.",
+  "errorUnknown": "Une erreur inconnue est survenue.",
+  "errorModelOverloadedTitle": "Modèle IA temporairement indisponible",
+  "errorModelOverloadedSuggestion": "Le service IA subit actuellement une forte demande ou est temporairement indisponible. Veuillez réessayer dans quelques instants."
 }
