@@ -1,7 +1,7 @@
 
 "use client";
 
-import * as React from "react";
+import React from "react";
 import { useParams, useRouter, usePathname } from "next/navigation"; 
 import { useTranslation } from 'react-i18next';
 import i18next from 'i18next';
@@ -46,7 +46,7 @@ import { analyzeAirQuality, type AnalyzeAirQualityInput } from '@/ai/flows/analy
 import { sendSmsReport, type SendSmsReportInput } from '@/ai/flows/send-sms-report-flow';
 
 
-export type PrintHandler = () => Promise<void>; // Updated to return Promise<void>
+export type PrintHandler = () => Promise<void>; 
 export type SetPrintHandlerType = (handler: PrintHandler | null) => void;
 
 
@@ -75,7 +75,7 @@ export default function DashboardLayout({
   const [isPrintReady, setIsPrintReady] = React.useState(false);
   const [isChatbotOpen, setIsChatbotOpen] = React.useState(false);
   const [isSendingSms, setIsSendingSms] = React.useState(false);
-  const [isGeneratingPdf, setIsGeneratingPdf] = React.useState(false); // New state
+  const [isGeneratingPdf, setIsGeneratingPdf] = React.useState(false);
   const { setTheme } = useTheme();
 
   const setPrintHandlerCallback = React.useCallback<SetPrintHandlerType>((handler) => {
@@ -91,8 +91,8 @@ export default function DashboardLayout({
 
 
   const handlePrint = async () => {
-    console.log("DashboardLayout: handlePrint triggered. isPrintReady:", isPrintReady, "printRef.current exists:", !!printRef.current);
-    if (isPrintReady && printRef.current) {
+    console.log("DashboardLayout: handlePrint triggered. isPrintReady:", isPrintReady, "printRef.current exists:", !!printRef.current, "isGeneratingPdf:", isGeneratingPdf);
+    if (isPrintReady && printRef.current && !isGeneratingPdf) {
       setIsGeneratingPdf(true);
       try {
         await printRef.current();
@@ -108,8 +108,12 @@ export default function DashboardLayout({
         setIsGeneratingPdf(false);
       }
     } else {
-      console.error("DashboardLayout: Print action called but not ready. isPrintReady:", isPrintReady, "printRef.current exists:", !!printRef.current);
-      alert(t('reportFeatureNotReady') || "Report generation feature is currently unavailable or not fully initialized. Please try again shortly.");
+      console.warn("DashboardLayout: Print action called but not ready or already in progress. isPrintReady:", isPrintReady, "printRef.current exists:", !!printRef.current, "isGeneratingPdf:", isGeneratingPdf);
+      if (isGeneratingPdf) {
+        alert(t('pdfGenerationInProgress') || "PDF generation is already in progress. Please wait.");
+      } else if (!isPrintReady || !printRef.current) {
+        alert(t('reportFeatureNotReady') || "Report generation feature is currently unavailable or not fully initialized. Please try again shortly.");
+      }
     }
   };
   
@@ -243,7 +247,7 @@ export default function DashboardLayout({
           onToggleChatbot={toggleChatbot}
           onSendSmsReport={handleSendSmsReport} 
           isSendingSms={isSendingSms} 
-          isGeneratingPdf={isGeneratingPdf} // Pass new state
+          isGeneratingPdf={isGeneratingPdf}
           isPrintReady={isPrintReady} 
           lng={currentLng}
         />

@@ -90,5 +90,6 @@
   "pdfGenerationErrorTitle": "Erreur de génération PDF",
   "pdfGenerationErrorDescription": "Impossible de générer le PDF. Veuillez réessayer.",
   "pdfGenerationErrorGeneric": "Une erreur s'est produite lors de la génération du PDF.",
-  "reportContentMissingError": "Erreur : Contenu du rapport introuvable. Impossible de générer le PDF."
+  "reportContentMissingError": "Erreur : Contenu du rapport introuvable ou la bibliothèque PDF a échoué. Impossible de générer le PDF.",
+  "pdfGenerationInProgress": "La génération du PDF est déjà en cours. Veuillez patienter."
 }

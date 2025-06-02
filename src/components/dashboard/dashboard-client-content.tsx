@@ -1,14 +1,14 @@
-
 // src/components/dashboard/dashboard-client-content.tsx
 'use client';
 
-import * as React from 'react';
+import *الوصف: مواءمة حالة `isPrintReady` عن طريق ضبط تبعيات `useEffect` في `DashboardClientContent` وتحسين سجلات وحدة التحكم والتنبيهات.
+React from 'react';
 import { Suspense } from 'react';
 import { DateRange } from 'react-day-picker';
 import { subDays, format, parseISO, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next'; 
-// import html2pdf from 'html2pdf.js'; // Removed static import
+// import html2pdf from 'html2pdf.js'; // Removed static import, will be dynamically imported
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -106,11 +106,12 @@ export default function DashboardClientContent({
   }, [date]);
 
   React.useEffect(() => {
+    console.log("DashboardClientContent: useEffect for print handler setup running. typeof setPrintHandler:", typeof setPrintHandler, "reportContentRef.current exists:", !!reportContentRef.current);
+
     if (typeof setPrintHandler === 'function' && reportContentRef.current) {
       const handleGeneratePdf = async () => {
         console.log("DashboardClientContent: Attempting to generate PDF with html2pdf.js...");
         
-        // Dynamically import html2pdf.js here
         const html2pdf = (await import('html2pdf.js')).default;
 
         if (reportContentRef.current && html2pdf) {
@@ -122,7 +123,7 @@ export default function DashboardClientContent({
             margin:       0.5, // inches
             filename:     filename,
             image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2, useCORS: true, logging: false, letterRendering: true },
+            html2canvas:  { scale: 2, useCORS: true, logging: false, letterRendering: true, width: element.scrollWidth, height: element.scrollHeight },
             jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
             pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
           };
@@ -149,12 +150,21 @@ export default function DashboardClientContent({
       };
 
     } else {
-      console.warn("DashboardClientContent: setPrintHandler was not a function or reportContentRef not ready on mount. Print functionality will be disabled until ready.");
+      if (typeof setPrintHandler !== 'function') {
+        console.warn("DashboardClientContent: setPrintHandler prop is not a function. Print functionality will be disabled.");
+      }
+      if (!reportContentRef.current) {
+        // This might happen on initial render before the ref is attached. The effect should re-run when refs are stable.
+        console.warn("DashboardClientContent: reportContentRef.current is not available on this effect run. Print functionality may be delayed.");
+      }
+      // Ensure to clear the handler if conditions aren't met
       if (typeof setPrintHandler === 'function') {
-         setPrintHandler(null); // Ensure it's cleared if not ready
+         setPrintHandler(null);
+         console.log("DashboardClientContent: Conditions for setting print handler not met, handler UNSET.");
       }
     }
-  }, [setPrintHandler, aiAnalysisForReport, t, lng]); // reportContentRef.current is not a stable dependency for useEffect. Effect runs once on mount.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setPrintHandler, t, lng]); // Removed aiAnalysisForReport from dependencies, reportContentRef.current is checked inside
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-6 lg:p-8">
@@ -204,11 +214,7 @@ export default function DashboardClientContent({
         {children}
       </Suspense>
       
-      {/* This div is now targeted by html2pdf.js using reportContentRef */}
-      <div ref={reportContentRef} id="printable-report-content-for-html2pdf" style={{ position: 'absolute', left: '-9999px', top: '-9999px', width: '8.5in', padding: '0.5in', backgroundColor: 'white' }}>
-        {/* The styles applied here are minimal as html2pdf will try to capture computed styles.
-            PrintableReport should ideally use inline styles or simple CSS that html2pdf handles well.
-            Alternatively, pass specific CSS to html2pdf options if needed. */}
+      <div ref={reportContentRef} id="printable-report-content-for-html2pdf" style={{ position: 'absolute', left: '-9999px', top: '-9999px', width: '8.5in', backgroundColor: 'white', color: '#333' }}>
         <PrintableReport airQualityData={MOCK_AIR_QUALITY_DATA} aiAnalysis={aiAnalysisForReport} lng={lng} />
       </div>
     </div>

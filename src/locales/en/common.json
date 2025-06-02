@@ -90,5 +90,6 @@
   "pdfGenerationErrorTitle": "PDF Generation Error",
   "pdfGenerationErrorDescription": "Could not generate PDF. Please try again.",
   "pdfGenerationErrorGeneric": "An error occurred while generating the PDF.",
-  "reportContentMissingError": "Error: Report content not found. Cannot generate PDF."
+  "reportContentMissingError": "Error: Report content not found or PDF library failed. Cannot generate PDF.",
+  "pdfGenerationInProgress": "PDF generation is already in progress. Please wait."
 }
