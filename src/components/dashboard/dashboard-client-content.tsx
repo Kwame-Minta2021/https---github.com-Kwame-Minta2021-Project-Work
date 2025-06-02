@@ -8,6 +8,7 @@ import { DateRange } from 'react-day-picker';
 import { subDays, format, parseISO, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { useTranslation } from 'react-i18next'; 
+import html2pdf from 'html2pdf.js';
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -20,7 +21,7 @@ import PrintableReport from '@/components/dashboard/printable-report';
 import { MOCK_AIR_QUALITY_DATA, MOCK_HISTORICAL_DATA as ALL_MOCK_HISTORICAL_DATA } from '@/lib/constants';
 import type { HistoricalDataPoint } from '@/types';
 import type { AnalyzeAirQualityOutput } from '@/ai/flows/analyze-air-quality';
-import type { PrintHandler, SetPrintHandlerType } from '@/app/[lng]/dashboard/layout'; 
+import type { SetPrintHandlerType } from '@/app/[lng]/dashboard/layout'; 
 import { cn } from '@/lib/utils';
 
 interface DashboardClientContentProps {
@@ -67,6 +68,7 @@ export default function DashboardClientContent({
   lng, 
 }: DashboardClientContentProps) {
   const { t } = useTranslation(); 
+  const reportContentRef = React.useRef<HTMLDivElement>(null);
   
   const [date, setDate] = React.useState<DateRange | undefined>({
     from: startOfDay(subDays(new Date(), 6)), 
@@ -104,108 +106,51 @@ export default function DashboardClientContent({
   }, [date]);
 
   React.useEffect(() => {
-    if (typeof setPrintHandler === 'function') {
-      const handlePrintRequest: PrintHandler = () => {
-        console.log("DashboardClientContent: Attempting to print report...");
-        const printWindow = window.open('', '_blank', 'width=800,height=600,scrollbars=yes,resizable=yes');
-
-        if (printWindow) {
-          console.log("DashboardClientContent: Print window opened successfully.");
-          const reportElement = document.getElementById('printable-report-content-client');
-
-          if (!reportElement) {
-            console.error('DashboardClientContent: Printable report content element not found (id: printable-report-content-client).');
-            try { printWindow.alert('Error: Report content not found. Please try again.');} catch(e) {console.error("Failed to alert in print window",e);}
-            try { printWindow.close(); } catch(e) {console.error("Failed to close print window",e);}
-            return;
-          }
-
-          const reportHTMLContent = reportElement.innerHTML;
-          console.log("DashboardClientContent: Report HTML captured. Length:", reportHTMLContent.length);
-
-          if (reportHTMLContent.trim() === "") {
-              console.error('DashboardClientContent: Report content is empty.');
-              try {printWindow.alert('Error: Report content is empty. Cannot print.');} catch(e) {console.error("Failed to alert in print window",e);}
-              try {printWindow.close();} catch(e) {console.error("Failed to close print window",e);}
-              return;
-          }
+    if (typeof setPrintHandler === 'function' && reportContentRef.current) {
+      const handleGeneratePdf = async () => {
+        console.log("DashboardClientContent: Attempting to generate PDF with html2pdf.js...");
+        if (reportContentRef.current) {
+          const element = reportContentRef.current;
+          const timestamp = format(new Date(), 'yyyyMMdd_HHmmss');
+          const filename = `BreatheEasy_Report_${timestamp}.pdf`;
           
-          printWindow.document.open();
-          
-          let htmlDocument = '<html><head>';
-          htmlDocument += '<title>' + (t('reportTitle') || 'BreatheEasy Air Quality Report').replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</title>';
-          htmlDocument += '<style>';
-          htmlDocument += `
-            body { font-family: Arial, Helvetica, sans-serif; margin: 25px; line-height: 1.6; color: #333; background-color: #fff; }
-            table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-            th, td { border: 1px solid #ccc; padding: 10px; text-align: left; vertical-align: top; }
-            th { background-color: #f0f4f7; font-weight: bold; color: #333; }
-            h1, h2, h3 { color: #64B5F6; margin-block-start: 1em; margin-block-end: 0.67em; }
-            h1 { font-size: 26px; font-weight: bold; text-align: center; margin-bottom: 15px; }
-            h2 { font-size: 22px; font-weight: bold; margin-bottom: 12px; border-bottom: 2px solid #64B5F6; padding-bottom: 6px;}
-            h3 { font-size: 18px; font-weight: bold; margin-bottom: 8px; color: #444;}
-            p { margin-bottom: 12px; }
-            .whitespace-pre-line { white-space: pre-line; }
-            header, section, footer { margin-bottom: 25px; }
-            footer { text-align: center; font-size: 13px; color: #777; margin-top: 30px; padding-top: 15px; border-top: 1px solid #eee; }
-            /* Specific classes from PrintableReport for better fidelity */
-            .text-gray-600 { color: #555; }
-            .text-primary { color: #64B5F6; }
-            .font-bold { font-weight: bold; }
-            .font-semibold { font-weight: 600; }
-            .text-xl { font-size: 20px; }
-            .text-3xl { font-size: 28px; }
-            .border-b-2 { border-bottom-width: 2px; }
-            /* .border-primary { border-bottom-color: #64B5F6; } */ /* Simplified, already commented out in previous version */
-            .pb-2 { padding-bottom: 8px; }
-            .leading-relaxed { line-height: 1.75; }
-            .flex { display: flex; }
-            .items-center { align-items: center; }
-            .mr-2 { margin-right: 8px; } /* For potential icons in report */
-            .bg-gray-100 { background-color: #f9f9f9; } /* For table header row */
-            .text-sm { font-size: 14px; }
-            .text-xs { font-size: 12px; }
-          `;
-          htmlDocument += '</style></head><body>';
-          htmlDocument += reportHTMLContent;
-          htmlDocument += '</body></html>';
-
-          printWindow.document.write(htmlDocument);
-          printWindow.document.close();
-
-          setTimeout(() => {
-            try {
-              printWindow.focus(); 
-              printWindow.print();
-              console.log("DashboardClientContent: Print dialog initiated.");
-            } catch (e) {
-              console.error("DashboardClientContent: Error initiating print dialog.", e);
-              alert("Could not initiate print. Please try again or check browser console.");
-            }
-          }, 300);
-
-          printWindow.onafterprint = () => {
-            console.log("DashboardClientContent: onafterprint event fired.");
-            try { printWindow.close(); } catch(e) {console.error("Failed to close print window post-print",e);}
+          const opt = {
+            margin:       0.5, // inches
+            filename:     filename,
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, useCORS: true, logging: false, letterRendering: true },
+            jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' },
+            pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
           };
 
+          try {
+            await html2pdf().from(element).set(opt).save();
+            console.log("DashboardClientContent: PDF generation and download initiated.");
+          } catch (pdfError) {
+            console.error("DashboardClientContent: html2pdf.js error:", pdfError);
+            alert(t('pdfGenerationErrorGeneric') || "An error occurred while generating the PDF.");
+          }
         } else {
-          console.error("DashboardClientContent: Failed to open print window. It might have been blocked by a popup blocker.");
-          alert(t('popupBlockerWarning') || "Failed to open print window. Please disable popup blockers for this site and try again.");
+          console.error('DashboardClientContent: Printable report content ref is not available.');
+          alert(t('reportContentMissingError') || 'Error: Report content not found. Cannot generate PDF.');
         }
       };
-      setPrintHandler(handlePrintRequest);
-      console.log("DashboardClientContent: Print handler callback has been SET.");
+      
+      setPrintHandler(handleGeneratePdf);
+      console.log("DashboardClientContent: PDF generation handler (using html2pdf.js) has been SET.");
       
       return () => {
         setPrintHandler(null);
-        console.log("DashboardClientContent: Print handler callback has been UNSET.");
+        console.log("DashboardClientContent: PDF generation handler has been UNSET.");
       };
 
     } else {
-      console.warn("DashboardClientContent: setPrintHandler was not a function. Print functionality will be disabled.");
+      console.warn("DashboardClientContent: setPrintHandler was not a function or reportContentRef not ready on mount. Print functionality will be disabled until ready.");
+      if (typeof setPrintHandler === 'function') {
+         setPrintHandler(null); // Ensure it's cleared if not ready
+      }
     }
-  }, [setPrintHandler, aiAnalysisForReport, t, lng]); 
+  }, [setPrintHandler, aiAnalysisForReport, t, lng]); // reportContentRef.current is not a stable dependency for useEffect. Effect runs once on mount.
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-6 lg:p-8">
@@ -255,10 +200,13 @@ export default function DashboardClientContent({
         {children}
       </Suspense>
       
-      <div id="printable-report-content-client" style={{ display: 'none' }}>
+      {/* This div is now targeted by html2pdf.js using reportContentRef */}
+      <div ref={reportContentRef} id="printable-report-content-for-html2pdf" style={{ position: 'absolute', left: '-9999px', top: '-9999px', width: '8.5in', padding: '0.5in', backgroundColor: 'white' }}>
+        {/* The styles applied here are minimal as html2pdf will try to capture computed styles.
+            PrintableReport should ideally use inline styles or simple CSS that html2pdf handles well.
+            Alternatively, pass specific CSS to html2pdf options if needed. */}
         <PrintableReport airQualityData={MOCK_AIR_QUALITY_DATA} aiAnalysis={aiAnalysisForReport} lng={lng} />
       </div>
     </div>
   );
 }
-

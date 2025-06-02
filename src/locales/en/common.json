@@ -86,5 +86,9 @@
   "errorModelOverloadedTitle": "AI Model Temporarily Unavailable",
   "errorModelOverloadedSuggestion": "The AI service is currently experiencing high demand or is temporarily unavailable. Please try again in a few moments.",
   "popupBlockerWarning": "Failed to open print window. Please disable popup blockers for this site and try again.",
-  "reportFeatureNotReady": "Report generation feature is currently unavailable. Please try again shortly."
+  "reportFeatureNotReady": "Report generation feature is currently unavailable or not fully initialized. Please try again shortly.",
+  "pdfGenerationErrorTitle": "PDF Generation Error",
+  "pdfGenerationErrorDescription": "Could not generate PDF. Please try again.",
+  "pdfGenerationErrorGeneric": "An error occurred while generating the PDF.",
+  "reportContentMissingError": "Error: Report content not found. Cannot generate PDF."
 }

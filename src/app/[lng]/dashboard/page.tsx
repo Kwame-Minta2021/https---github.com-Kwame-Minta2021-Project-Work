@@ -3,11 +3,11 @@ import DashboardClientContent from '@/components/dashboard/dashboard-client-cont
 import AIAnalyzerSection from '@/components/dashboard/ai-analyzer-section';
 import { MOCK_AIR_QUALITY_DATA } from '@/lib/constants';
 import { analyzeAirQuality, type AnalyzeAirQualityOutput, type AnalyzeAirQualityInput } from '@/ai/flows/analyze-air-quality';
-import type { PrintHandler, SetPrintHandlerType } from './layout'; 
+import type { SetPrintHandlerType } from './layout'; 
 import type { AirQualityData } from '@/types';
 
 interface DashboardPageProps {
-  setPrintHandler?: SetPrintHandlerType; // Updated type
+  setPrintHandler?: SetPrintHandlerType;
   params: { lng: string }; 
 }
 

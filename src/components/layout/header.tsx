@@ -11,11 +11,12 @@ interface HeaderProps {
   onToggleChatbot: () => void;
   onSendSmsReport: () => Promise<void>; 
   isSendingSms: boolean; 
-  isPrintReady: boolean; // New prop
+  isGeneratingPdf: boolean; // New prop
+  isPrintReady: boolean; 
   lng: string; 
 }
 
-export function Header({ onPrint, onToggleChatbot, onSendSmsReport, isSendingSms, isPrintReady, lng }: HeaderProps) {
+export function Header({ onPrint, onToggleChatbot, onSendSmsReport, isSendingSms, isGeneratingPdf, isPrintReady, lng }: HeaderProps) {
   const { t } = useTranslation();
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-md sm:px-6">
@@ -37,8 +38,12 @@ export function Header({ onPrint, onToggleChatbot, onSendSmsReport, isSendingSms
           <Bot className="mr-2 h-4 w-4" />
           {t('aiChatbot')}
         </Button>
-        <Button variant="outline" size="sm" onClick={onPrint} disabled={!isPrintReady}>
-          <FileDown className="mr-2 h-4 w-4" />
+        <Button variant="outline" size="sm" onClick={onPrint} disabled={!isPrintReady || isGeneratingPdf}>
+          {isGeneratingPdf ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <FileDown className="mr-2 h-4 w-4" />
+          )}
           {t('generatePdf')}
         </Button>
         <Button variant="outline" size="sm" onClick={onSendSmsReport} disabled={isSendingSms}>

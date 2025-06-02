@@ -46,8 +46,7 @@ import { analyzeAirQuality, type AnalyzeAirQualityInput } from '@/ai/flows/analy
 import { sendSmsReport, type SendSmsReportInput } from '@/ai/flows/send-sms-report-flow';
 
 
-export type PrintHandler = () => void;
-// Updated type for the setter function to accept null
+export type PrintHandler = () => Promise<void>; // Updated to return Promise<void>
 export type SetPrintHandlerType = (handler: PrintHandler | null) => void;
 
 
@@ -76,6 +75,7 @@ export default function DashboardLayout({
   const [isPrintReady, setIsPrintReady] = React.useState(false);
   const [isChatbotOpen, setIsChatbotOpen] = React.useState(false);
   const [isSendingSms, setIsSendingSms] = React.useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = React.useState(false); // New state
   const { setTheme } = useTheme();
 
   const setPrintHandlerCallback = React.useCallback<SetPrintHandlerType>((handler) => {
@@ -90,14 +90,26 @@ export default function DashboardLayout({
   }, []);
 
 
-  const handlePrint = () => {
-    console.log("DashboardLayout: handlePrint triggered. isPrintReady state:", isPrintReady, "printRef.current exists:", !!printRef.current);
+  const handlePrint = async () => {
+    console.log("DashboardLayout: handlePrint triggered. isPrintReady:", isPrintReady, "printRef.current exists:", !!printRef.current);
     if (isPrintReady && printRef.current) {
-      printRef.current();
+      setIsGeneratingPdf(true);
+      try {
+        await printRef.current();
+        console.log("DashboardLayout: PDF generation initiated by handler.");
+      } catch (error) {
+        console.error("DashboardLayout: Error during PDF generation:", error);
+        toast({
+          variant: "destructive",
+          title: t('pdfGenerationErrorTitle') || "PDF Generation Error",
+          description: t('pdfGenerationErrorDescription') || "Could not generate PDF. Please try again.",
+        });
+      } finally {
+        setIsGeneratingPdf(false);
+      }
     } else {
       console.error("DashboardLayout: Print action called but not ready. isPrintReady:", isPrintReady, "printRef.current exists:", !!printRef.current);
-      // Use a more specific alert if the handler isn't set, even if isPrintReady was true (race condition)
-      alert(t('reportFeatureNotReady') || "Report generation feature is currently unavailable. Please try again shortly.");
+      alert(t('reportFeatureNotReady') || "Report generation feature is currently unavailable or not fully initialized. Please try again shortly.");
     }
   };
   
@@ -231,11 +243,12 @@ export default function DashboardLayout({
           onToggleChatbot={toggleChatbot}
           onSendSmsReport={handleSendSmsReport} 
           isSendingSms={isSendingSms} 
-          isPrintReady={isPrintReady} // Pass isPrintReady state
+          isGeneratingPdf={isGeneratingPdf} // Pass new state
+          isPrintReady={isPrintReady} 
           lng={currentLng}
         />
         {React.cloneElement(children as React.ReactElement, { 
-          setPrintHandler: setPrintHandlerCallback, // Pass the memoized callback
+          setPrintHandler: setPrintHandlerCallback, 
           lng: currentLng 
         })}
       </SidebarInset>
