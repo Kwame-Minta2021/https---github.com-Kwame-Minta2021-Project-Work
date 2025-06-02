@@ -18,10 +18,12 @@ import RealtimeDataGrid from '@/components/dashboard/realtime-data-grid';
 import DataVisualization from '@/components/dashboard/data-visualization';
 import PrintableReport from '@/components/dashboard/printable-report';
 import { MOCK_AIR_QUALITY_DATA, MOCK_HISTORICAL_DATA as ALL_MOCK_HISTORICAL_DATA } from '@/lib/constants';
-import type { HistoricalDataPoint, CustomAlertSettings } from '@/types';
+import type { HistoricalDataPoint, CustomAlertSettings, AirQualityData } from '@/types';
 import type { AnalyzeAirQualityOutput } from '@/ai/flows/analyze-air-quality';
 import type { SetPrintHandlerType } from '@/app/[lng]/dashboard/layout'; 
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+import { sendShortAlertSms, type SendShortAlertInput } from '@/ai/flows/send-short-alert-sms-flow';
 
 interface DashboardClientContentProps {
   setPrintHandler?: SetPrintHandlerType; 
@@ -29,7 +31,6 @@ interface DashboardClientContentProps {
   children: React.ReactNode; 
   lng: string;
   initialCustomAlertSettings: CustomAlertSettings;
-  onInitialLoad: (currentSettings: CustomAlertSettings) => void;
 }
 
 function AIAnalyzerSkeleton({ t }: { t: (key: string) => string }) {
@@ -62,15 +63,71 @@ function AIAnalyzerSkeleton({ t }: { t: (key: string) => string }) {
   );
 }
 
+// Moved from page.tsx
+const checkAlertsAndNotify = (
+  lng: string, 
+  currentSettings: CustomAlertSettings, 
+  airData: AirQualityData,
+  t: (key: string, options?: any) => string,
+  toastFn: (options: any) => void 
+) => {
+  // Check custom CO threshold
+  if (currentSettings.co?.enabled && airData.co.value > currentSettings.co.threshold) {
+    toastFn({
+      title: t('customThresholdAlertTitle'),
+      description: t('customCOAlertDesc', { 
+        value: airData.co.value.toFixed(2), 
+        threshold: currentSettings.co.threshold.toFixed(2),
+        unit: 'ppm' 
+      }),
+      variant: 'warning', 
+    });
+  }
+
+  // Check custom PM2.5 threshold
+  if (currentSettings.pm2_5?.enabled && airData.pm2_5.value > currentSettings.pm2_5.threshold) {
+    toastFn({
+      title: t('customThresholdAlertTitle'),
+      description: t('customPM25AlertDesc', { 
+        value: airData.pm2_5.value.toFixed(0), 
+        threshold: currentSettings.pm2_5.threshold.toFixed(0),
+        unit: 'µg/m³'
+      }),
+      variant: 'warning',
+    });
+  }
+
+  // Check for predefined unhealthy thresholds for SMS
+  Object.values(airData).forEach(pollutant => {
+    if (typeof pollutant === 'object' && pollutant.thresholds?.unhealthy && pollutant.value > pollutant.thresholds.unhealthy) {
+      const smsInput: SendShortAlertInput = {
+        pollutantName: pollutant.name.split(' ')[0], 
+        currentValue: pollutant.value,
+        thresholdValue: pollutant.thresholds.unhealthy,
+        unit: pollutant.unit,
+        language: lng,
+      };
+      sendShortAlertSms(smsInput)
+        .then(result => {
+          console.log(`SMS alert attempt for ${pollutant.name}: ${result.status}`);
+        })
+        .catch(error => {
+          console.error(`Failed to send SMS alert for ${pollutant.name}:`, error);
+        });
+    }
+  });
+};
+
+
 export default function DashboardClientContent({ 
   setPrintHandler, 
   aiAnalysisForReport,
   children,
   lng, 
   initialCustomAlertSettings,
-  onInitialLoad,
 }: DashboardClientContentProps) {
   const { t } = useTranslation(); 
+  const { toast } = useToast();
   const reportContentRef = React.useRef<HTMLDivElement>(null);
   
   const [date, setDate] = React.useState<DateRange | undefined>({
@@ -83,8 +140,14 @@ export default function DashboardClientContent({
   const [isPdfLibReady, setIsPdfLibReady] = useState(false);
 
   useEffect(() => {
-    onInitialLoad(initialCustomAlertSettings);
-  }, [initialCustomAlertSettings, onInitialLoad]);
+    // Initial load logic, previously in onInitialLoad
+    if (initialCustomAlertSettings && MOCK_AIR_QUALITY_DATA && t && toast) {
+      checkAlertsAndNotify(lng, initialCustomAlertSettings, MOCK_AIR_QUALITY_DATA, t, toast);
+    }
+    if(aiAnalysisForReport && toast && t) {
+        toast({ title: t('aiAnalysisUpdatedTitle'), description: t('aiAnalysisUpdatedDesc') });
+    }
+  }, [initialCustomAlertSettings, lng, t, toast, aiAnalysisForReport]);
 
 
   React.useEffect(() => {
@@ -169,11 +232,11 @@ export default function DashboardClientContent({
               console.log("DashboardClientContent: PDF generation and download initiated.");
             } catch (pdfError) {
               console.error("DashboardClientContent: html2pdf.js error:", pdfError);
-              alert(t('pdfGenerationErrorGeneric') || "An error occurred while generating the PDF.");
+              toast({ variant: "destructive", title: t('pdfGenerationErrorTitle'), description: t('pdfGenerationErrorGeneric') });
             }
           } else {
             console.error('DashboardClientContent: Printable report content ref or html2pdfInstance is not available at time of PDF generation.');
-            alert(t('reportContentMissingError') || 'Error: Report content or PDF library not found. Cannot generate PDF.');
+            toast({ variant: "destructive", title: t('pdfGenerationErrorTitle'), description: t('reportContentMissingError') });
           }
         };
         
@@ -191,7 +254,7 @@ export default function DashboardClientContent({
         }
       };
     }
-  }, [isPdfLibReady, html2pdfInstance, setPrintHandler, t, lng]); 
+  }, [isPdfLibReady, html2pdfInstance, setPrintHandler, t, lng, toast]); 
 
   const selectedDateRangeString = date?.from && date?.to 
     ? `${format(date.from, "LLL dd, y")} - ${format(date.to, "LLL dd, y")}`
@@ -260,3 +323,4 @@ export default function DashboardClientContent({
     </div>
   );
 }
+
