@@ -123,15 +123,8 @@
   "smsAlertAttemptTitle": "Alerte SMS",
   "smsAlertAttemptDesc": "Tentative d'alerte SMS pour {{pollutant}}: {{status}}",
   "viewReportPageTitle": "Rapport Détaillé sur la Qualité de l'Air",
-  "mapPlaceholderText": "Une carte en direct de l'emplacement actuel sera affichée ici.",
   "localityReportTitle": "Conseils sur la Qualité de l'Air Spécifiques à la Localité",
   "airQualityForecastTitle": "Prévisions Hebdomadaires de la Qualité de l'Air",
   "fetchingForecast": "Récupération des prévisions de qualité de l'air...",
-  "forecastNotAvailable": "Les prévisions de qualité de l'air sont actuellement indisponibles.",
-  "aerialViewMapTitle": "Vue Aérienne de l'Emplacement",
-  "aerialViewLoading": "Chargement de la Vue Aérienne...",
-  "aerialViewProcessing": "La vidéo de la Vue Aérienne est en cours de traitement. Veuillez vérifier ultérieurement.",
-  "aerialViewNotFound": "Vidéo de la Vue Aérienne non trouvée pour l'adresse spécifiée.",
-  "aerialViewPlayPauseHint": "Cliquez sur la vidéo pour lire/mettre en pause.",
-  "aerialViewError": "Impossible de charger la Vue Aérienne. Veuillez vérifier la console pour plus de détails."
+  "forecastNotAvailable": "Les prévisions de qualité de l'air sont actuellement indisponibles."
 }

@@ -94,7 +94,7 @@ export default async function ViewReportPage({ params: { lng } }: ViewReportPage
       lng={lng}
       translations={{
         pageTitle: t('viewReportPageTitle'),
-        mapPlaceholderText: t('mapPlaceholderText'),
+        // mapPlaceholderText: t('mapPlaceholderText'), // Removed
         currentSensorReadingsTitle: t('reportSensorReadingsTitle'),
         aiAnalyzerTitle: t('aiAnalyzer'),
         rlModelAnalysisTitle: t('rlModelAnalysis'),
@@ -107,6 +107,7 @@ export default async function ViewReportPage({ params: { lng } }: ViewReportPage
         reportNoHealthImpactData: t('reportNoHealthImpactData'),
         reportNoRecommendationsData: t('reportNoRecommendationsData'),
         localityReportNotAvailable: t('localityReportNotAvailable', "Locality-specific advice is currently unavailable."),
+        // Removed aerial view translations from here as they are no longer passed
       }}
     />
   );
