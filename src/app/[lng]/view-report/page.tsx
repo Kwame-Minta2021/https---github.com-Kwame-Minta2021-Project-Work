@@ -86,14 +86,13 @@ export default async function ViewReportPage({ params: { lng } }: ViewReportPage
 
   return (
     <ViewReportClient
-      currentReadings={MOCK_AIR_QUALITY_DATA} // Still passing MOCK_AIR_QUALITY_DATA for other potential uses or if AI flows depend on its structure
+      currentReadings={MOCK_AIR_QUALITY_DATA}
       aiAnalysis={currentAnalysis}
       localityReport={localityReport}
       weeklyForecast={weeklyForecast}
       lng={lng}
       translations={{
         pageTitle: t('viewReportPageTitle'),
-        // currentSensorReadingsTitle: t('reportSensorReadingsTitle'), // Removed
         aiAnalyzerTitle: t('aiAnalyzer'),
         rlModelAnalysisTitle: t('rlModelAnalysis'),
         effectOnHumanHealthTitle: t('effectOnHumanHealth'),
@@ -104,7 +103,13 @@ export default async function ViewReportPage({ params: { lng } }: ViewReportPage
         forecastNotAvailable: t('forecastNotAvailable'),
         reportNoHealthImpactData: t('reportNoHealthImpactData'),
         reportNoRecommendationsData: t('reportNoRecommendationsData'),
-        localityReportNotAvailable: t('localityReportNotAvailable', "Locality-specific advice is currently unavailable."),
+        localityReportNotAvailable: t('localityReportNotAvailable'),
+        backToDashboard: t('backToDashboard'),
+        downloadReport: t('downloadReport'),
+        downloadingPdf: t('downloadingPdf'),
+        pdfDownloadedSuccess: t('pdfDownloadedSuccess'),
+        pdfDownloadFailed: t('pdfDownloadFailed'),
+        reportGeneratedOn: t('reportGeneratedOn'),
       }}
     />
   );
