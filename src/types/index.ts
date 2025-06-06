@@ -1,4 +1,3 @@
-
 import type { LucideIcon } from 'lucide-react';
 import type { GenerateLocalityReportInput, GenerateLocalityReportOutput } from '@/ai/flows/generate-locality-report-flow';
 import type { ForecastAirQualityInput, ForecastAirQualityOutput } from '@/ai/flows/forecast-air-quality-flow';
@@ -35,19 +34,27 @@ export interface HistoricalDataPoint {
   [pollutant: string]: number | string; // e.g., PM25: 10, CO: 0.5
 }
 
-export interface CustomAlertThreshold {
-  pollutantId: 'co' | 'pm2_5'; // Add other pollutants as needed
-  threshold: number;
-  unit: string;
-  enabled: boolean;
+export interface CustomAlertSettings {
+  co?: {
+    enabled: boolean;
+    threshold: number;
+  };
+  pm2_5?: {
+    enabled: boolean;
+    threshold: number;
+  };
 }
 
-export interface CustomAlertSettings {
-  co?: Omit<CustomAlertThreshold, 'pollutantId' | 'unit'> & { unit: 'ppm' };
-  pm2_5?: Omit<CustomAlertThreshold, 'pollutantId' | 'unit'> & { unit: 'µg/m³' };
+export interface AnalyzeAirQualityInput {
+  co: number;
+  vocs: number;
+  ch4Lpg: number;
+  pm10: number;
+  pm25: number;
+  pm100: number;
+  language: string;
 }
 
 // Export types for new flows
 export type { GenerateLocalityReportInput, GenerateLocalityReportOutput };
 export type { ForecastAirQualityInput, ForecastAirQualityOutput };
-

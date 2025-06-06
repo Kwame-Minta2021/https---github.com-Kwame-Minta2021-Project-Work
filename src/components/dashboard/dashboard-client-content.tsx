@@ -15,7 +15,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import RealtimeDataGrid from '@/components/dashboard/realtime-data-grid';
 import DataVisualization from '@/components/dashboard/data-visualization';
-import { MOCK_AIR_QUALITY_DATA, MOCK_HISTORICAL_DATA as ALL_MOCK_HISTORICAL_DATA } from '@/lib/constants';
+import { MOCK_HISTORICAL_DATA as ALL_MOCK_HISTORICAL_DATA } from '@/lib/constants';
+import { subscribeToRealtimeData } from '@/lib/firebase-data';
 import type { HistoricalDataPoint, CustomAlertSettings, AirQualityData } from '@/types';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
@@ -27,35 +28,7 @@ interface DashboardClientContentProps {
   initialCustomAlertSettings: CustomAlertSettings;
 }
 
-function AIAnalyzerSkeleton({ t }: { t: (key: string) => string }) {
-  return (
-    <section id="analyzer-skeleton" className="mb-8 scroll-mt-20">
-      <h2 className="text-2xl font-semibold tracking-tight mb-4">{t('aiAnalyzer')}</h2>
-      <Card className="shadow-lg">
-        <CardHeader>
-          <CardTitle>{t('rlModelAnalysis')}</CardTitle>
-          <CardDescription>
-            {t('rlModelAnalysisDesc')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div>
-            <h3 className="font-semibold text-lg mb-2">{t('effectOnHumanHealth')}</h3>
-            <Skeleton className="h-4 w-3/4 mb-2" />
-            <Skeleton className="h-4 w-1/2" />
-          </div>
-          <hr className="my-4" />
-          <div>
-            <h3 className="font-semibold text-lg mb-2">{t('bestActionToReducePresence')}</h3>
-            <Skeleton className="h-4 w-full mb-2" />
-            <Skeleton className="h-4 w-5/6 mb-2" />
-            <Skeleton className="h-4 w-3/4" />
-          </div>
-        </CardContent>
-      </Card>
-    </section>
-  );
-}
+
 
 const checkAlertsAndNotify = (
   lng: string,
@@ -107,17 +80,28 @@ export default function DashboardClientContent({
   });
 
   const [filteredHistoricalData, setFilteredHistoricalData] = React.useState<HistoricalDataPoint[]>([]);
+  const [realtimeData, setRealtimeData] = React.useState<AirQualityData | null>(null);
 
   useEffect(() => {
-    console.log("DashboardClientContent: Initial load effect triggered. initialCustomAlertSettings:", initialCustomAlertSettings);
-    if (initialCustomAlertSettings && MOCK_AIR_QUALITY_DATA && t && toast) {
-        checkAlertsAndNotify(lng, initialCustomAlertSettings, MOCK_AIR_QUALITY_DATA, t, toast);
-    }
-    // This toast was for AI analysis for PDF report, which is removed.
-    // A toast for AI Analyzer section loading is handled within AIAnalyzerSection itself or its parent.
-    // if(aiAnalysisForReport && toast && t) {
-    //     toast({ title: t('aiAnalysisUpdatedTitle'), description: t('aiAnalysisUpdatedDesc') });
-    // }
+    console.log("DashboardClientContent: Setting up Firebase real-time data subscription");
+    const unsubscribe = subscribeToRealtimeData((data) => {
+      if (data) {
+        setRealtimeData(data);
+        console.log("DashboardClientContent: Received real-time data:", data);
+        
+        // Check alerts with real-time data
+        if (initialCustomAlertSettings && t && toast) {
+          checkAlertsAndNotify(lng, initialCustomAlertSettings, data, t, toast);
+        }
+      } else {
+        console.warn("DashboardClientContent: No real-time data received");
+      }
+    });
+
+    return () => {
+      console.log("DashboardClientContent: Cleaning up Firebase subscription");
+      unsubscribe();
+    };
   }, [initialCustomAlertSettings, lng, t, toast]);
 
 
@@ -193,9 +177,29 @@ export default function DashboardClientContent({
         </Popover>
       </div>
 
-      <RealtimeDataGrid data={MOCK_AIR_QUALITY_DATA} />
+      {realtimeData ? (
+        <RealtimeDataGrid data={realtimeData} />
+      ) : (
+        <div className="mb-8">
+          <h2 className="text-2xl font-semibold tracking-tight mb-4">{t('realTimeAirQuality')}</h2>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Card key={i} className="shadow-sm">
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Skeleton className="h-4 w-4" />
+                    <Skeleton className="h-4 w-16" />
+                  </div>
+                  <Skeleton className="h-8 w-12 mb-1" />
+                  <Skeleton className="h-3 w-8" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
       <DataVisualization historicalData={filteredHistoricalData} />
-      <Suspense fallback={<AIAnalyzerSkeleton t={t} />}>
+      <Suspense fallback={<div>Loading AI Analyzer...</div>}>
         {children}
       </Suspense>
       {/* Hidden div for PDF rendering source is removed */}
