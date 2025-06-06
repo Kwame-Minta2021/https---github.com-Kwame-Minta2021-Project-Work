@@ -86,9 +86,42 @@ export default function DataVisualization({ historicalData }: DataVisualizationP
     
     const latest = filteredData[filteredData.length - 1];
     return [
-      { name: 'CO', value: latest.CO || 0, fill: "var(--color-CO)" },
-      { name: 'VOCs', value: latest.VOCs || 0, fill: "var(--color-VOCs)" },
-      { name: 'PM2.5', value: latest.PM25 || 0, fill: "var(--color-PM25)" },
+      { 
+        name: 'CO', 
+        value: parseFloat((latest.CO || 0).toString()), 
+        fill: "var(--color-CO)",
+        unit: 'ppm'
+      },
+      { 
+        name: 'VOCs', 
+        value: parseFloat((latest.VOCs || 0).toString()), 
+        fill: "var(--color-VOCs)",
+        unit: 'ppm'
+      },
+      { 
+        name: 'PM2.5', 
+        value: parseFloat((latest.PM25 || 0).toString()), 
+        fill: "var(--color-PM25)",
+        unit: 'µg/m³'
+      },
+      { 
+        name: 'PM1.0', 
+        value: parseFloat((latest.PM10 || 0).toString()), 
+        fill: "var(--color-PM10)",
+        unit: 'µg/m³'
+      },
+      { 
+        name: 'PM10', 
+        value: parseFloat((latest.PM100 || 0).toString()), 
+        fill: "var(--color-PM100)",
+        unit: 'µg/m³'
+      },
+      { 
+        name: 'CH4/LPG', 
+        value: parseFloat((latest.CH4LPG || 0).toString()), 
+        fill: "var(--color-CH4LPG)",
+        unit: 'ppm'
+      }
     ];
   }, [filteredData]); 
   
@@ -209,9 +242,12 @@ export default function DataVisualization({ historicalData }: DataVisualizationP
                   <YAxis tickLine={false} axisLine={false} tickMargin={8} />
                   <Tooltip cursor={{ fill: "hsl(var(--accent) / 0.1)" }} content={<ChartTooltipContent hideLabel />} />
                   <Legend />
-                  <Line type="monotone" dataKey="CO" name="CO (ppm)" stroke="var(--color-CO)" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="CO" name="CO (ppm)" stroke="var(--color-CO)" strokeWidth={2} dot={false} activeDot={{r:6}} />
                     <Line type="monotone" dataKey="VOCs" name="VOCs (ppm)" stroke="var(--color-VOCs)" strokeWidth={2} dot={false} activeDot={{r:6}} />
                     <Line type="monotone" dataKey="PM25" name="PM2.5 (µg/m³)" stroke="var(--color-PM25)" strokeWidth={2} dot={false} activeDot={{r:6}} />
+                    <Line type="monotone" dataKey="PM10" name="PM1.0 (µg/m³)" stroke="var(--color-PM10)" strokeWidth={2} dot={false} activeDot={{r:6}} />
+                    <Line type="monotone" dataKey="PM100" name="PM10 (µg/m³)" stroke="var(--color-PM100)" strokeWidth={2} dot={false} activeDot={{r:6}} />
+                    <Line type="monotone" dataKey="CH4LPG" name="CH4/LPG (ppm)" stroke="var(--color-CH4LPG)" strokeWidth={2} dot={false} activeDot={{r:6}} />
                   </RechartsLineChart>
                 </ChartContainer>
               ) : (
@@ -240,7 +276,9 @@ export default function DataVisualization({ historicalData }: DataVisualizationP
                   <CartesianGrid horizontal={false} />
                   <XAxis type="number" hide />
                   <YAxis dataKey="name" type="category" tickLine={false} axisLine={false} tickMargin={8} width={80} />
-                  <Tooltip cursor={{ fill: "hsl(var(--accent) / 0.1)" }} content={<ChartTooltipContent indicator="dot" />} />
+                  <Tooltip cursor={{ fill: "hsl(var(--accent) / 0.1)" }} content={<ChartTooltipContent indicator="dot" formatter={(value, name, props) => [
+                    `${value} ${props.payload?.unit || ''}`, name
+                  ]} />} />
                   <Legend />
                   <Bar dataKey="value" radius={5}>
                      {currentData.map((entry, index) => (

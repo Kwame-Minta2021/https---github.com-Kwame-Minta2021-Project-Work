@@ -81,6 +81,7 @@ export default function DashboardClientContent({
 
   const [filteredHistoricalData, setFilteredHistoricalData] = React.useState<HistoricalDataPoint[]>([]);
   const [realtimeData, setRealtimeData] = React.useState<AirQualityData | null>(null);
+  const [historicalReadings, setHistoricalReadings] = React.useState<HistoricalDataPoint[]>([]);
 
   useEffect(() => {
     console.log("DashboardClientContent: Setting up Firebase real-time data subscription with 2-minute intervals");
@@ -91,6 +92,23 @@ export default function DashboardClientContent({
         if (data) {
           setRealtimeData(data);
           console.log("DashboardClientContent: Received real-time data:", data);
+          
+          // Add real-time data to historical readings
+          const newHistoricalPoint: HistoricalDataPoint = {
+            timestamp: data.timestamp.toISOString(),
+            CO: data.co.value,
+            VOCs: data.vocs.value,
+            PM25: data.pm2_5.value,
+            PM10: data.pm1_0.value,
+            PM100: data.pm10.value,
+            CH4LPG: data.ch4Lpg.value
+          };
+          
+          setHistoricalReadings(prev => {
+            const updated = [...prev, newHistoricalPoint];
+            // Keep only last 1000 readings to prevent memory issues
+            return updated.slice(-1000);
+          });
           
           // Check alerts with real-time data
           if (initialCustomAlertSettings && t && toast) {
@@ -125,10 +143,14 @@ export default function DashboardClientContent({
 
   React.useEffect(() => {
     let newFilteredData: HistoricalDataPoint[] = [];
+    
+    // Use real historical readings if available, otherwise fall back to mock data
+    const dataSource = historicalReadings.length > 0 ? historicalReadings : ALL_MOCK_HISTORICAL_DATA;
+    
     if (date?.from && date?.to) {
       const startDate = startOfDay(date.from);
       const endDate = endOfDay(date.to);
-      newFilteredData = ALL_MOCK_HISTORICAL_DATA.filter(point => {
+      newFilteredData = dataSource.filter(point => {
         try {
           const pointDate = parseISO(point.timestamp);
           return isWithinInterval(pointDate, { start: startDate, end: endDate });
@@ -140,7 +162,7 @@ export default function DashboardClientContent({
     } else {
       const defaultStartDate = startOfDay(subDays(new Date(), 6));
       const defaultEndDate = endOfDay(new Date());
-       newFilteredData = ALL_MOCK_HISTORICAL_DATA.filter(point => {
+       newFilteredData = dataSource.filter(point => {
         try {
           const pointDate = parseISO(point.timestamp);
           return isWithinInterval(pointDate, { start: defaultStartDate, end: defaultEndDate });
@@ -151,7 +173,7 @@ export default function DashboardClientContent({
       });
     }
     setFilteredHistoricalData(newFilteredData);
-  }, [date]);
+  }, [date, historicalReadings]);
 
   return (
     <div className="flex-1 space-y-6 p-4 md:p-6 lg:p-8">
