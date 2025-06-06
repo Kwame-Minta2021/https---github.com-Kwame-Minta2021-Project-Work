@@ -21,6 +21,9 @@ interface AnalysisResult {
   recommendations: string[];
   healthImpact: string;
   riskFactors: string[];
+  readingsSummary?: string;
+  continuousExposureImpact?: string;
+  controlRoomActions?: string[];
 }
 
 interface PollutantDetail {
@@ -175,22 +178,22 @@ export function AIAnalyzerSection({ readings, lng }: AIAnalyzerSectionProps) {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 space-y-4 md:space-y-0">
         <div className="space-y-2">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 shadow-lg">
-              <Brain className="h-6 w-6 text-white" />
+            <div className="p-3 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 shadow-lg">
+              <Brain className="h-7 w-7 text-white" />
             </div>
             <div>
-              <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <h2 className="text-3xl font-bold text-slate-800">
                 RL Model Analysis
               </h2>
-              <p className="text-muted-foreground">BreatheEasy Device • AI-Powered Assessment</p>
+              <p className="text-slate-600 font-medium">BreatheEasy Device Intelligence System</p>
             </div>
           </div>
         </div>
         {lastAnalysisTime && (
-          <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border">
-            <Activity className="h-4 w-4 text-green-500" />
-            <span className="text-sm text-muted-foreground">
-              Last analyzed: {lastAnalysisTime.toLocaleTimeString()}
+          <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-lg border border-slate-200">
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+            <span className="text-sm font-medium text-slate-700">
+              Last Analysis: {lastAnalysisTime.toLocaleTimeString()}
             </span>
           </div>
         )}
@@ -272,11 +275,11 @@ export function AIAnalyzerSection({ readings, lng }: AIAnalyzerSectionProps) {
             )}
 
             {analysis && !isAnalyzing && (
-              <div key={animationKey} className="space-y-8 animate-in fade-in-50 duration-700">
+              <div key={animationKey} className="space-y-6 animate-in fade-in-50 duration-700">
                 {/* Overall Status */}
-                <div className={`p-6 rounded-2xl border-2 bg-gradient-to-r ${getStatusGradient(analysis.overallStatus)} transform transition-all duration-500 hover:scale-[1.02]`}>
+                <div className={`p-6 rounded-xl border-2 bg-gradient-to-r ${getStatusGradient(analysis.overallStatus)}`}>
                   <div className="flex items-start gap-4">
-                    <div className="p-2 rounded-xl bg-white/80 backdrop-blur-sm">
+                    <div className="p-2 rounded-lg bg-white/90 backdrop-blur-sm">
                       {getStatusIcon(analysis.overallStatus)}
                     </div>
                     <div className="flex-1 space-y-3">
@@ -285,79 +288,115 @@ export function AIAnalyzerSection({ readings, lng }: AIAnalyzerSectionProps) {
                           variant="secondary" 
                           className="text-sm font-semibold px-3 py-1 bg-white/90 backdrop-blur-sm capitalize"
                         >
-                          {analysis.overallStatus} Air Quality
+                          {analysis.overallStatus.toUpperCase()} STATUS
                         </Badge>
-                        <div className="h-1.5 w-1.5 rounded-full bg-current animate-pulse"></div>
-                        <span className="text-sm font-medium opacity-80">Live Assessment</span>
+                        <span className="text-sm font-medium opacity-80">Current Assessment</span>
                       </div>
                       <p className="text-base font-medium leading-relaxed">{analysis.summary}</p>
                     </div>
                   </div>
                 </div>
 
-                {/* Health Impact */}
-                <div className="bg-white rounded-xl p-6 border shadow-sm">
-                  <h4 className="font-bold text-lg mb-4 flex items-center gap-3">
-                    <div className="p-2 rounded-lg bg-blue-100">
-                      <Shield className="h-5 w-5 text-blue-600" />
+                {/* Readings Summary */}
+                <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+                  <h4 className="font-bold text-lg mb-4 flex items-center gap-3 text-slate-800">
+                    <div className="p-2 rounded-lg bg-slate-100">
+                      <TrendingUp className="h-5 w-5 text-slate-700" />
                     </div>
-                    Health Impact Assessment
+                    Current Readings Summary
                   </h4>
-                  <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-l-4 border-blue-400">
-                    <p className="text-gray-700 leading-relaxed">{analysis.healthImpact}</p>
+                  <div className="p-4 bg-slate-50 rounded-lg border border-slate-200">
+                    <p className="text-slate-700 leading-relaxed font-medium">
+                      {readings && (
+                        `Analysis of air quality readings shows CO levels at ${readings.co?.value.toFixed(2)} ppm, 
+                        VOCs at ${readings.vocs?.value.toFixed(2)} ppm, CH4/LPG at ${(readings.ch4Lpg?.value / 18).toFixed(2)} ppm, 
+                        PM2.5 at ${readings.pm2_5?.value} µg/m³, and PM10 at ${readings.pm10?.value} µg/m³. 
+                        Current readings indicate ${analysis.overallStatus} air quality conditions based on WHO guidelines.`
+                      )}
+                    </p>
                   </div>
                 </div>
 
-                {/* Quick Actions */}
+                {/* Health Implications - Continuous Exposure */}
+                <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+                  <h4 className="font-bold text-lg mb-4 flex items-center gap-3 text-slate-800">
+                    <div className="p-2 rounded-lg bg-red-100">
+                      <Shield className="h-5 w-5 text-red-600" />
+                    </div>
+                    Continuous Exposure Health Impact
+                  </h4>
+                  <div className="p-4 bg-red-50 rounded-lg border-l-4 border-red-400">
+                    <p className="text-red-800 leading-relaxed font-medium">
+                      {analysis.overallStatus === 'unhealthy' && (
+                        "Prolonged exposure to current pollutant levels may cause respiratory irritation, cardiovascular stress, and exacerbation of existing health conditions. Vulnerable populations including children, elderly, and individuals with respiratory conditions are at higher risk."
+                      )}
+                      {analysis.overallStatus === 'moderate' && (
+                        "Extended exposure may cause mild respiratory symptoms and discomfort for sensitive individuals. Regular monitoring recommended for vulnerable populations."
+                      )}
+                      {analysis.overallStatus === 'good' && (
+                        "Current levels pose minimal health risks for continuous exposure. Standard monitoring protocols sufficient."
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Control Room Actions */}
+                <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+                  <h4 className="font-bold text-lg mb-4 flex items-center gap-3 text-slate-800">
+                    <div className="p-2 rounded-lg bg-blue-100">
+                      <Target className="h-5 w-5 text-blue-600" />
+                    </div>
+                    Control Room Actions Required
+                  </h4>
+                  <div className="grid gap-3">
+                    {[
+                      analysis.overallStatus === 'unhealthy' ? "IMMEDIATE: Activate all ventilation systems to maximum capacity" : "ROUTINE: Maintain standard ventilation protocols",
+                      analysis.overallStatus === 'unhealthy' ? "ALERT: Notify facility management and occupants of air quality status" : "MONITOR: Continue regular air quality surveillance",
+                      readings?.co?.value > 4.5 ? "ACTION: Check and service gas appliances immediately" : "STATUS: Gas appliance operation within normal parameters",
+                      readings?.pm2_5?.value > 12 ? "DEPLOY: Activate portable air filtration units in high-occupancy areas" : "MAINTAIN: Standard air filtration protocols sufficient"
+                    ].map((action, index) => (
+                      <div 
+                        key={index} 
+                        className={`flex items-start gap-3 p-4 rounded-lg border-l-4 ${
+                          action.startsWith('IMMEDIATE') || action.startsWith('ALERT') || action.startsWith('ACTION') || action.startsWith('DEPLOY') 
+                            ? 'bg-red-50 border-red-400' 
+                            : 'bg-blue-50 border-blue-400'
+                        }`}
+                      >
+                        <div className={`w-3 h-3 rounded-full mt-1 flex-shrink-0 ${
+                          action.startsWith('IMMEDIATE') || action.startsWith('ALERT') || action.startsWith('ACTION') || action.startsWith('DEPLOY') 
+                            ? 'bg-red-500' 
+                            : 'bg-blue-500'
+                        }`}></div>
+                        <span className={`font-medium leading-relaxed ${
+                          action.startsWith('IMMEDIATE') || action.startsWith('ALERT') || action.startsWith('ACTION') || action.startsWith('DEPLOY') 
+                            ? 'text-red-800' 
+                            : 'text-blue-800'
+                        }`}>{action}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Immediate Actions */}
                 {analysis.recommendations && analysis.recommendations.length > 0 && (
-                  <div className="bg-white rounded-xl p-6 border shadow-sm">
-                    <h4 className="font-bold text-lg mb-4 flex items-center gap-3">
+                  <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
+                    <h4 className="font-bold text-lg mb-4 flex items-center gap-3 text-slate-800">
                       <div className="p-2 rounded-lg bg-green-100">
                         <CheckCircle className="h-5 w-5 text-green-600" />
                       </div>
-                      Immediate Actions
-                      <Badge variant="outline" className="ml-auto">
-                        {analysis.recommendations.length} suggestions
-                      </Badge>
+                      Recommended Interventions
                     </h4>
                     <div className="grid gap-3">
-                      {analysis.recommendations.slice(0, 3).map((rec, index) => (
+                      {analysis.recommendations.slice(0, 4).map((rec, index) => (
                         <div 
                           key={index} 
-                          className="group flex items-center gap-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200 hover:shadow-md transition-all duration-300"
+                          className="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200"
                         >
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 flex items-center justify-center text-white font-bold text-sm group-hover:scale-110 transition-transform">
+                          <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white font-bold text-xs">
                             {index + 1}
                           </div>
-                          <span className="text-green-800 font-medium flex-1">{rec}</span>
-                          <Eye className="h-4 w-4 text-green-600 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </div>
-                      ))}
-                      {analysis.recommendations.length > 3 && (
-                        <div className="text-center py-2">
-                          <Badge variant="secondary" className="text-xs">
-                            +{analysis.recommendations.length - 3} more recommendations available
-                          </Badge>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {/* Risk Factors */}
-                {analysis.riskFactors && analysis.riskFactors.length > 0 && (
-                  <div className="bg-white rounded-xl p-6 border shadow-sm">
-                    <h4 className="font-bold text-lg mb-4 flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-amber-100">
-                        <AlertTriangle className="h-5 w-5 text-amber-600" />
-                      </div>
-                      Risk Factors Detected
-                    </h4>
-                    <div className="space-y-3">
-                      {analysis.riskFactors.map((risk, index) => (
-                        <div key={index} className="flex items-start gap-3 p-3 bg-amber-50 rounded-lg border-l-3 border-amber-400">
-                          <div className="w-2 h-2 rounded-full bg-amber-500 mt-2 flex-shrink-0"></div>
-                          <span className="text-amber-800 text-sm leading-relaxed">{risk}</span>
+                          <span className="text-green-800 font-medium">{rec}</span>
                         </div>
                       ))}
                     </div>
@@ -365,12 +404,12 @@ export function AIAnalyzerSection({ readings, lng }: AIAnalyzerSectionProps) {
                 )}
 
                 {/* Refresh Button */}
-                <div className="pt-4">
+                <div className="pt-2">
                   <Button 
                     onClick={analyzeAirQuality} 
                     variant="outline"
                     disabled={isAnalyzing}
-                    className="w-full h-12 text-base font-medium bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 hover:from-blue-100 hover:to-purple-100 transition-all duration-300"
+                    className="w-full h-12 text-base font-medium bg-slate-50 border-slate-300 hover:bg-slate-100 transition-all duration-300"
                   >
                     <RefreshCw className="h-5 w-5 mr-3" />
                     Refresh Analysis
