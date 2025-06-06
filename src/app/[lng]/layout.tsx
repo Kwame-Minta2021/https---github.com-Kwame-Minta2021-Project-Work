@@ -1,4 +1,3 @@
-
 import type { Metadata } from 'next';
 import { Inter, Roboto_Mono } from 'next/font/google'; // Changed font imports
 import '../globals.css'; // Adjusted path
@@ -22,7 +21,8 @@ export async function generateStaticParams() {
   return languages.map((lng) => ({ lng }));
 }
 
-export async function generateMetadata({ params: { lng } }: { params: { lng: string } }): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: { lng: string } }): Promise<Metadata> {
+  const { lng } = await params;
   const { t } = await getTranslations(lng, 'common');
   return {
     title: t('dashboardTitle'), // Example of using translated title
