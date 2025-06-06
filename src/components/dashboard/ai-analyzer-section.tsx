@@ -265,18 +265,21 @@ export function AIAnalyzerSection({ readings, lng }: AIAnalyzerSectionProps) {
                 {analysis.recommendations && analysis.recommendations.length > 0 && (
                   <div>
                     <h4 className="font-semibold mb-3 flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      Recommended Actions
+                      <CheckCircle className="h-4 w-4 text-blue-500" />
+                      Quick Actions
                     </h4>
-                    <div className="grid gap-3">
-                      {analysis.recommendations.map((rec, index) => (
-                        <div key={index} className="flex items-start gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
-                          <div className="w-6 h-6 rounded-full bg-green-500 text-white flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
-                            {index + 1}
-                          </div>
-                          <span className="text-sm text-green-800">{rec}</span>
+                    <div className="space-y-2">
+                      {analysis.recommendations.slice(0, 3).map((rec, index) => (
+                        <div key={index} className="flex items-center gap-2 p-2 bg-blue-50 rounded-md border-l-3 border-blue-400">
+                          <div className="w-4 h-4 rounded-full bg-blue-500 flex-shrink-0"></div>
+                          <span className="text-sm text-blue-800 font-medium">{rec}</span>
                         </div>
                       ))}
+                      {analysis.recommendations.length > 3 && (
+                        <div className="text-xs text-muted-foreground text-center mt-2">
+                          +{analysis.recommendations.length - 3} more actions available
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
