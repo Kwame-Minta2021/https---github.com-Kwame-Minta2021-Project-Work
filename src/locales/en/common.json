@@ -46,6 +46,7 @@
   "aiAnalyzer": "AI Analyzer",
   "rlModelAnalysis": "RL Model Analysis",
   "rlModelAnalysisDesc": "AI-powered insights based on current air quality readings, simulating an RL model.",
+  "lastUpdated": "Last updated",
   "effectOnHumanHealth": "Effect on Human Health",
   "bestActionToReducePresence": "Best Action to Reduce Presence",
   "aiChatbot": "AI Chatbot",

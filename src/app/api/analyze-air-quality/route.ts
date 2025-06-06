@@ -5,8 +5,10 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'AIzaSyCCEetj
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { co, vocs, ch4Lpg, pm10, pm25, pm100, language = 'en' } = body;
+    const { co, vocs, ch4Lpg: rawCh4Lpg, pm10, pm25, pm100, language = 'en' } = await request.json();
+
+    // Adjust CH4/LPG value by dividing by 18 to get more reasonable readings
+    const ch4Lpg = rawCh4Lpg / 18;
 
     if (co === undefined || vocs === undefined || ch4Lpg === undefined || 
         pm10 === undefined || pm25 === undefined || pm100 === undefined) {
@@ -67,20 +69,22 @@ Base your assessment on WHO air quality guidelines and provide practical recomme
 
       if (co > 9 || pm25 > 35 || pm100 > 150 || vocs > 3) {
         overallStatus = 'unhealthy';
-        healthImpact = 'Air quality may pose health risks, especially for sensitive individuals.';
+        healthImpact = 'High pollutant levels detected - immediate action required.';
         recommendations = [
-          'Limit outdoor activities',
-          'Use air purifiers indoors',
-          'Consider wearing masks outdoors',
-          'Seek medical advice if experiencing symptoms'
+          'Increase ventilation immediately',
+          'Activate air purifiers',
+          'Check gas appliances',
+          'Reduce indoor activities',
+          'Consider temporary relocation'
         ];
       } else if (co > 4.5 || pm25 > 12 || pm100 > 54 || vocs > 0.5) {
         overallStatus = 'moderate';
-        healthImpact = 'Air quality is acceptable, but some pollutants may be a concern for sensitive people.';
+        healthImpact = 'Moderate levels - monitor and take precautionary measures.';
         recommendations = [
-          'Sensitive individuals should limit prolonged outdoor exertion',
-          'Ensure good indoor ventilation',
-          'Monitor symptoms if you have respiratory conditions'
+          'Open windows for ventilation',
+          'Check appliance operation',
+          'Use exhaust fans',
+          'Monitor sensitive individuals'
         ];
       }
 
