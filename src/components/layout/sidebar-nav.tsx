@@ -1,4 +1,3 @@
-
 "use client";
 import {
   SidebarMenu,
@@ -50,7 +49,7 @@ export function SidebarNav({ lng }: SidebarNavProps) {
             >
               <a>
                 <item.icon />
-                <span>{t(item.labelKey)}</span>
+                <span suppressHydrationWarning>{t(item.labelKey)}</span>
               </a>
             </SidebarMenuButton>
           </Link>
