@@ -14,7 +14,8 @@ interface DashboardPageProps {
 }
 
 
-export default async function DashboardPage({ params: { lng }, customAlertSettings }: DashboardPageProps) {
+export default async function DashboardPage({ params, customAlertSettings }: DashboardPageProps) {
+  const { lng } = await params;
   
   const rawSensorReadingsForAnalyzer: Omit<AnalyzeAirQualityInput, 'language'> = {
     co: MOCK_AIR_QUALITY_DATA.co.value,
