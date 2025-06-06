@@ -84,19 +84,52 @@ export function subscribeToRealtimeData(callback: (data: AirQualityData | null) 
   const dataRef = ref(database, '/sensorData');
   
   const unsubscribe = onValue(dataRef, (snapshot) => {
-    const data = snapshot.val() as FirebaseRealtimeData;
-    if (data && 
-        typeof data.CH4_LPG_ppm === 'number' &&
-        typeof data.CO_ppm === 'number' &&
-        typeof data.PM10_ug_m3 === 'number' &&
-        typeof data.PM1_0_ug_m3 === 'number' &&
-        typeof data.PM2_5_ug_m3 === 'number' &&
-        typeof data.VOCs_ppm === 'number') {
-      
-      const airQualityData = convertFirebaseDataToAirQualityData(data);
+    const rawData = snapshot.val();
+    if (!rawData) {
+      console.warn('No Firebase data received');
+      callback(null);
+      return;
+    }
+
+    // Handle nested structure where data is organized by timestamp keys
+    let latestData: FirebaseRealtimeData | null = null;
+    let latestTimestamp = 0;
+
+    // If data is directly the sensor readings (flat structure)
+    if (typeof rawData.CH4_LPG_ppm === 'number') {
+      latestData = rawData as FirebaseRealtimeData;
+    } else {
+      // If data is nested by timestamp, find the latest entry
+      Object.keys(rawData).forEach(key => {
+        const entry = rawData[key];
+        const timestamp = parseInt(key) || entry.timestamp || 0;
+        
+        if (timestamp > latestTimestamp && 
+            typeof entry.CH4_LPG_ppm === 'number' &&
+            typeof entry.CO_ppm === 'number' &&
+            typeof entry.PM10_ug_m3 === 'number' &&
+            typeof entry.PM1_0_ug_m3 === 'number' &&
+            typeof entry.PM2_5_ug_m3 === 'number' &&
+            typeof entry.VOCs_ppm === 'number') {
+          latestTimestamp = timestamp;
+          latestData = {
+            CH4_LPG_ppm: entry.CH4_LPG_ppm,
+            CO_ppm: entry.CO_ppm,
+            PM10_ug_m3: entry.PM10_ug_m3,
+            PM1_0_ug_m3: entry.PM1_0_ug_m3,
+            PM2_5_ug_m3: entry.PM2_5_ug_m3,
+            VOCs_ppm: entry.VOCs_ppm
+          };
+        }
+      });
+    }
+
+    if (latestData) {
+      console.log('Firebase: Using latest data from timestamp:', latestTimestamp);
+      const airQualityData = convertFirebaseDataToAirQualityData(latestData);
       callback(airQualityData);
     } else {
-      console.warn('Invalid or incomplete Firebase data:', data);
+      console.warn('Invalid or incomplete Firebase data:', rawData);
       callback(null);
     }
   }, (error) => {
