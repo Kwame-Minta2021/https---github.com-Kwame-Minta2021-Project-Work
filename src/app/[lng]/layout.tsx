@@ -31,13 +31,14 @@ export async function generateMetadata({ params }: { params: { lng: string } }):
 }
 
 
-export default function LocaleLayout({ // Renamed from RootLayout to avoid confusion
+export default async function LocaleLayout({ // Renamed from RootLayout to avoid confusion
   children,
-  params: { lng },
+  params,
 }: Readonly<{
   children: React.ReactNode;
-  params: { lng: string };
+  params: Promise<{ lng: string }>;
 }>) {
+  const { lng } = await params; {
   return (
     <html lang={lng} dir={dir(lng)} suppressHydrationWarning>
       <body 

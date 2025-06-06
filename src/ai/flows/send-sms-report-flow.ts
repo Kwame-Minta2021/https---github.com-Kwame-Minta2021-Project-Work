@@ -54,17 +54,16 @@ const sendSmsReportFlow = ai.defineFlow(
     const { reportDate, language, currentReadings, aiAnalysis } = input;
     
     const toPhoneNumber = input.targetPhoneNumber || process.env.CONTROL_UNIT_PHONE;
-    const twilioAccountSid = process.env.TWILIO_ACCOUNT_SID;
-    const twilioAuthToken = process.env.TWILIO_AUTH_TOKEN;
-    const twilioFromNumber = process.env.TWILIO_FROM_NUMBER;
+    const vonageApiKey = process.env.VONAGE_API_KEY;
+    const vonageApiSecret = process.env.VONAGE_API_SECRET;
 
     if (!toPhoneNumber) {
       const msg = "Recipient phone number (CONTROL_UNIT_PHONE env var or targetPhoneNumber input) is not set.";
       console.warn(`Warning: ${msg}`);
       return { status: `SMS sending failed: ${msg}`, messageSent: "" };
     }
-    if (!twilioAccountSid || !twilioAuthToken || !twilioFromNumber) {
-      const msg = "Twilio credentials (TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM_NUMBER) are not fully configured in environment variables.";
+    if (!vonageApiKey || !vonageApiSecret) {
+      const msg = "Vonage credentials (VONAGE_API_KEY, VONAGE_API_SECRET) are not fully configured in environment variables.";
       console.error(`Error: ${msg}`);
       return { status: `SMS sending failed: ${msg}`, messageSent: "" };
     }
@@ -84,35 +83,38 @@ const sendSmsReportFlow = ai.defineFlow(
         smsMessage = smsMessage.substring(0, MAX_SMS_LENGTH - 3) + "...";
     }
 
-    const twilioApiUrl = `https://api.twilio.com/2010-04-01/Accounts/${twilioAccountSid}/Messages.json`;
+    const vonageApiUrl = 'https://rest.nexmo.com/sms/json';
     
-    const requestBody = new URLSearchParams();
-    requestBody.append('To', toPhoneNumber);
-    requestBody.append('From', twilioFromNumber);
-    requestBody.append('Body', smsMessage);
+    const requestBody = {
+      api_key: vonageApiKey,
+      api_secret: vonageApiSecret,
+      to: toPhoneNumber,
+      from: 'BreatheEasy',
+      text: smsMessage,
+    };
 
     try {
-      const response = await fetch(twilioApiUrl, {
+      const response = await fetch(vonageApiUrl, {
         method: 'POST',
         headers: {
-          'Authorization': 'Basic ' + Buffer.from(`${twilioAccountSid}:${twilioAuthToken}`).toString('base64'),
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/json',
         },
-        body: requestBody.toString(),
+        body: JSON.stringify(requestBody),
       });
 
       const responseData = await response.json();
 
-      if (response.ok && responseData.sid) {
-        console.log(`SMS successfully sent to ${toPhoneNumber}. SID: ${responseData.sid}`);
+      if (response.ok && responseData.messages && responseData.messages[0].status === '0') {
+        const messageId = responseData.messages[0]['message-id'];
+        console.log(`SMS successfully sent to ${toPhoneNumber}. Message ID: ${messageId}`);
         return { 
           status: `SMS report successfully sent to ${toPhoneNumber}.`, 
           messageSent: smsMessage,
-          messageSid: responseData.sid 
+          messageSid: messageId 
         };
       } else {
-        console.error("Twilio API error:", responseData);
-        const errorMessage = responseData.message || `Twilio API responded with status ${response.status}`;
+        console.error("Vonage API error:", responseData);
+        const errorMessage = responseData.messages?.[0]?.['error-text'] || `Vonage API responded with status ${response.status}`;
         return { 
           status: `Failed to send SMS report to ${toPhoneNumber}. ${errorMessage}`, 
           messageSent: smsMessage,
@@ -120,7 +122,7 @@ const sendSmsReportFlow = ai.defineFlow(
         };
       }
     } catch (error) {
-      console.error("Error sending SMS via Twilio:", error);
+      console.error("Error sending SMS via Vonage:", error);
       const errorMessage = error instanceof Error ? error.message : "An unknown error occurred during SMS sending.";
       return { 
         status: `Failed to send SMS report to ${toPhoneNumber}. ${errorMessage}`,
