@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -6,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import { Brain, CheckCircle, Info, AlertTriangle, Loader2, RefreshCw, TrendingUp, Shield, Wind, Zap } from 'lucide-react';
+import { Brain, CheckCircle, Info, AlertTriangle, Loader2, RefreshCw, TrendingUp, Shield, Wind, Zap, Activity, Waves, Eye, Target } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import type { AirQualityData } from '@/types';
 
@@ -31,6 +32,7 @@ interface PollutantDetail {
   percentage: number;
   icon: React.ReactNode;
   description: string;
+  gradient: string;
 }
 
 export function AIAnalyzerSection({ readings, lng }: AIAnalyzerSectionProps) {
@@ -39,12 +41,14 @@ export function AIAnalyzerSection({ readings, lng }: AIAnalyzerSectionProps) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastAnalysisTime, setLastAnalysisTime] = useState<Date | null>(null);
+  const [animationKey, setAnimationKey] = useState(0);
 
   const analyzeAirQuality = async () => {
     if (!readings) return;
 
     setIsAnalyzing(true);
     setError(null);
+    setAnimationKey(prev => prev + 1);
 
     try {
       const response = await fetch('/api/analyze-air-quality', {
@@ -87,26 +91,26 @@ export function AIAnalyzerSection({ readings, lng }: AIAnalyzerSectionProps) {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'good':
-        return <CheckCircle className="h-5 w-5 text-green-500" />;
+        return <CheckCircle className="h-6 w-6 text-emerald-500" />;
       case 'moderate':
-        return <Info className="h-5 w-5 text-yellow-500" />;
+        return <Info className="h-6 w-6 text-amber-500" />;
       case 'unhealthy':
-        return <AlertTriangle className="h-5 w-5 text-red-500" />;
+        return <AlertTriangle className="h-6 w-6 text-red-500" />;
       default:
-        return <Info className="h-5 w-5 text-gray-500" />;
+        return <Info className="h-6 w-6 text-gray-500" />;
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusGradient = (status: string) => {
     switch (status) {
       case 'good':
-        return 'bg-green-50 text-green-700 border-green-200';
+        return 'from-emerald-50 to-green-50 border-emerald-200';
       case 'moderate':
-        return 'bg-yellow-50 text-yellow-700 border-yellow-200';
+        return 'from-amber-50 to-yellow-50 border-amber-200';
       case 'unhealthy':
-        return 'bg-red-50 text-red-700 border-red-200';
+        return 'from-red-50 to-rose-50 border-red-200';
       default:
-        return 'bg-gray-50 text-gray-700 border-gray-200';
+        return 'from-gray-50 to-slate-50 border-gray-200';
     }
   };
 
@@ -119,7 +123,7 @@ export function AIAnalyzerSection({ readings, lng }: AIAnalyzerSectionProps) {
 
   const getPollutantPercentage = (value: number, thresholds: any) => {
     if (!thresholds) return 0;
-    const maxThreshold = thresholds.unhealthy * 1.5; // 150% of unhealthy threshold as max
+    const maxThreshold = thresholds.unhealthy * 1.5;
     return Math.min((value / maxThreshold) * 100, 100);
   };
 
@@ -130,8 +134,9 @@ export function AIAnalyzerSection({ readings, lng }: AIAnalyzerSectionProps) {
       unit: readings.co?.unit || 'ppm',
       status: getPollutantStatus(readings.co?.value || 0, readings.co?.thresholds),
       percentage: getPollutantPercentage(readings.co?.value || 0, readings.co?.thresholds),
-      icon: <Zap className="h-4 w-4" />,
-      description: 'Colorless, odorless gas from combustion'
+      icon: <Zap className="h-5 w-5" />,
+      description: 'Odorless gas from incomplete combustion',
+      gradient: 'from-red-500 to-orange-500'
     },
     {
       name: 'VOCs',
@@ -139,8 +144,9 @@ export function AIAnalyzerSection({ readings, lng }: AIAnalyzerSectionProps) {
       unit: readings.vocs?.unit || 'ppm',
       status: getPollutantStatus(readings.vocs?.value || 0, readings.vocs?.thresholds),
       percentage: getPollutantPercentage(readings.vocs?.value || 0, readings.vocs?.thresholds),
-      icon: <Wind className="h-4 w-4" />,
-      description: 'Organic compounds that evaporate at room temperature'
+      icon: <Wind className="h-5 w-5" />,
+      description: 'Organic compounds from solvents & fuels',
+      gradient: 'from-cyan-500 to-blue-500'
     },
     {
       name: 'PM2.5',
@@ -148,8 +154,9 @@ export function AIAnalyzerSection({ readings, lng }: AIAnalyzerSectionProps) {
       unit: readings.pm2_5?.unit || 'µg/m³',
       status: getPollutantStatus(readings.pm2_5?.value || 0, readings.pm2_5?.thresholds),
       percentage: getPollutantPercentage(readings.pm2_5?.value || 0, readings.pm2_5?.thresholds),
-      icon: <Shield className="h-4 w-4" />,
-      description: 'Fine particles that can penetrate deep into lungs'
+      icon: <Shield className="h-5 w-5" />,
+      description: 'Fine particles penetrating deep into lungs',
+      gradient: 'from-purple-500 to-pink-500'
     },
     {
       name: 'PM10',
@@ -157,146 +164,217 @@ export function AIAnalyzerSection({ readings, lng }: AIAnalyzerSectionProps) {
       unit: readings.pm10?.unit || 'µg/m³',
       status: getPollutantStatus(readings.pm10?.value || 0, readings.pm10?.thresholds),
       percentage: getPollutantPercentage(readings.pm10?.value || 0, readings.pm10?.thresholds),
-      icon: <TrendingUp className="h-4 w-4" />,
-      description: 'Inhalable particles from dust, pollen, and smoke'
+      icon: <Waves className="h-5 w-5" />,
+      description: 'Inhalable particles from dust & pollen',
+      gradient: 'from-indigo-500 to-purple-500'
     }
   ] : [];
 
   return (
     <section id="ai-analyzer" className="mb-8 scroll-mt-20">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-semibold tracking-tight">{t('aiAnalyzer')}</h2>
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 space-y-4 md:space-y-0">
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 shadow-lg">
+              <Brain className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                RL Model Analysis
+              </h2>
+              <p className="text-muted-foreground">BreatheEasy Device • AI-Powered Assessment</p>
+            </div>
+          </div>
+        </div>
         {lastAnalysisTime && (
-          <p className="text-sm text-muted-foreground">
-            Last analyzed: {lastAnalysisTime.toLocaleTimeString()}
-          </p>
+          <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-full border">
+            <Activity className="h-4 w-4 text-green-500" />
+            <span className="text-sm text-muted-foreground">
+              Last analyzed: {lastAnalysisTime.toLocaleTimeString()}
+            </span>
+          </div>
         )}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Main Analysis Card */}
-        <Card className="shadow-lg lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Brain className="h-6 w-6 text-blue-600" />
-              {t('rlModelAnalysis')}
-            </CardTitle>
-            <CardDescription>
-              AI-powered comprehensive air quality assessment
-            </CardDescription>
+      <div className="grid gap-8 lg:grid-cols-3">
+        {/* Main Analysis Card - Takes 2 columns */}
+        <Card className="lg:col-span-2 shadow-xl border-0 bg-gradient-to-br from-white to-gray-50">
+          <CardHeader className="pb-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <CardTitle className="text-2xl font-bold text-gray-900">
+                  Intelligent Air Quality Assessment
+                </CardTitle>
+                <CardDescription className="text-base text-gray-600">
+                  Real-time analysis from your BreatheEasy monitoring device
+                </CardDescription>
+              </div>
+              <div className="p-3 rounded-full bg-gradient-to-r from-blue-100 to-purple-100">
+                <Target className="h-6 w-6 text-blue-600" />
+              </div>
+            </div>
           </CardHeader>
-          <CardContent className="space-y-6">
+          
+          <CardContent className="space-y-8">
             {!readings && (
-              <div className="text-center py-8 text-muted-foreground">
-                <Wind className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>{t('waitingForData')}</p>
+              <div className="text-center py-12">
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-32 h-32 rounded-full bg-gradient-to-r from-blue-100 to-purple-100 animate-pulse"></div>
+                  </div>
+                  <Wind className="h-16 w-16 mx-auto mb-6 text-blue-500 relative z-10" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">Connecting to BreatheEasy Device</h3>
+                <p className="text-gray-600">Waiting for sensor data from your monitoring device...</p>
               </div>
             )}
 
             {error && (
-              <div className="text-center py-4">
-                <AlertTriangle className="h-8 w-8 mx-auto mb-2 text-red-500" />
-                <p className="text-red-600 mb-4">{error}</p>
-                <Button 
-                  onClick={analyzeAirQuality} 
-                  variant="outline"
-                  disabled={!readings}
-                  size="sm"
-                >
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  {t('retryAnalysis')}
-                </Button>
+              <div className="text-center py-8">
+                <div className="p-4 rounded-2xl bg-red-50 border border-red-200 max-w-md mx-auto">
+                  <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-red-500" />
+                  <h3 className="text-lg font-semibold text-red-700 mb-2">Analysis Error</h3>
+                  <p className="text-red-600 mb-6">{error}</p>
+                  <Button 
+                    onClick={analyzeAirQuality} 
+                    variant="outline"
+                    disabled={!readings}
+                    className="border-red-300 text-red-700 hover:bg-red-50"
+                  >
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    Retry Analysis
+                  </Button>
+                </div>
               </div>
             )}
 
             {isAnalyzing && (
-              <div className="flex items-center justify-center py-8">
-                <div className="text-center">
-                  <Loader2 className="h-8 w-8 animate-spin text-blue-600 mx-auto mb-4" />
-                  <p className="text-muted-foreground">{t('analyzingData')}</p>
-                  <p className="text-sm text-muted-foreground mt-2">This may take a few moments...</p>
+              <div className="flex items-center justify-center py-12">
+                <div className="text-center space-y-6">
+                  <div className="relative">
+                    <div className="w-20 h-20 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 animate-spin mx-auto flex items-center justify-center">
+                      <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center">
+                        <Brain className="h-8 w-8 text-blue-600 animate-pulse" />
+                      </div>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-semibold text-gray-900">Analyzing Air Quality Data</h3>
+                    <p className="text-gray-600">Processing sensor readings through RL model...</p>
+                    <div className="flex items-center justify-center gap-1 mt-4">
+                      <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                      <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                      <div className="w-2 h-2 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
 
             {analysis && !isAnalyzing && (
-              <div className="space-y-6">
+              <div key={animationKey} className="space-y-8 animate-in fade-in-50 duration-700">
                 {/* Overall Status */}
-                <div className={`p-4 rounded-lg border-2 ${getStatusColor(analysis.overallStatus)}`}>
-                  <div className="flex items-center gap-2 mb-2">
-                    {getStatusIcon(analysis.overallStatus)}
-                    <Badge variant="secondary" className="capitalize">
-                      {analysis.overallStatus} Air Quality
-                    </Badge>
+                <div className={`p-6 rounded-2xl border-2 bg-gradient-to-r ${getStatusGradient(analysis.overallStatus)} transform transition-all duration-500 hover:scale-[1.02]`}>
+                  <div className="flex items-start gap-4">
+                    <div className="p-2 rounded-xl bg-white/80 backdrop-blur-sm">
+                      {getStatusIcon(analysis.overallStatus)}
+                    </div>
+                    <div className="flex-1 space-y-3">
+                      <div className="flex items-center gap-3">
+                        <Badge 
+                          variant="secondary" 
+                          className="text-sm font-semibold px-3 py-1 bg-white/90 backdrop-blur-sm capitalize"
+                        >
+                          {analysis.overallStatus} Air Quality
+                        </Badge>
+                        <div className="h-1.5 w-1.5 rounded-full bg-current animate-pulse"></div>
+                        <span className="text-sm font-medium opacity-80">Live Assessment</span>
+                      </div>
+                      <p className="text-base font-medium leading-relaxed">{analysis.summary}</p>
+                    </div>
                   </div>
-                  <p className="text-sm font-medium">{analysis.summary}</p>
                 </div>
 
                 {/* Health Impact */}
-                <div>
-                  <h4 className="font-semibold mb-3 flex items-center gap-2">
-                    <Shield className="h-4 w-4 text-blue-500" />
+                <div className="bg-white rounded-xl p-6 border shadow-sm">
+                  <h4 className="font-bold text-lg mb-4 flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-blue-100">
+                      <Shield className="h-5 w-5 text-blue-600" />
+                    </div>
                     Health Impact Assessment
                   </h4>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    {analysis.healthImpact}
-                  </p>
+                  <div className="p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-l-4 border-blue-400">
+                    <p className="text-gray-700 leading-relaxed">{analysis.healthImpact}</p>
+                  </div>
                 </div>
 
-                {/* Risk Factors */}
-                {analysis.riskFactors && analysis.riskFactors.length > 0 && (
-                  <div>
-                    <h4 className="font-semibold mb-3 flex items-center gap-2">
-                      <AlertTriangle className="h-4 w-4 text-orange-500" />
-                      Risk Factors
-                    </h4>
-                    <div className="grid gap-2">
-                      {analysis.riskFactors.map((risk, index) => (
-                        <div key={index} className="flex items-start gap-2">
-                          <div className="w-2 h-2 rounded-full bg-orange-400 mt-2 flex-shrink-0"></div>
-                          <span className="text-sm text-muted-foreground">{risk}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Recommendations */}
+                {/* Quick Actions */}
                 {analysis.recommendations && analysis.recommendations.length > 0 && (
-                  <div>
-                    <h4 className="font-semibold mb-3 flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-blue-500" />
-                      Quick Actions
+                  <div className="bg-white rounded-xl p-6 border shadow-sm">
+                    <h4 className="font-bold text-lg mb-4 flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-green-100">
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                      </div>
+                      Immediate Actions
+                      <Badge variant="outline" className="ml-auto">
+                        {analysis.recommendations.length} suggestions
+                      </Badge>
                     </h4>
-                    <div className="space-y-2">
+                    <div className="grid gap-3">
                       {analysis.recommendations.slice(0, 3).map((rec, index) => (
-                        <div key={index} className="flex items-center gap-2 p-2 bg-blue-50 rounded-md border-l-3 border-blue-400">
-                          <div className="w-4 h-4 rounded-full bg-blue-500 flex-shrink-0"></div>
-                          <span className="text-sm text-blue-800 font-medium">{rec}</span>
+                        <div 
+                          key={index} 
+                          className="group flex items-center gap-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200 hover:shadow-md transition-all duration-300"
+                        >
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 flex items-center justify-center text-white font-bold text-sm group-hover:scale-110 transition-transform">
+                            {index + 1}
+                          </div>
+                          <span className="text-green-800 font-medium flex-1">{rec}</span>
+                          <Eye className="h-4 w-4 text-green-600 opacity-0 group-hover:opacity-100 transition-opacity" />
                         </div>
                       ))}
                       {analysis.recommendations.length > 3 && (
-                        <div className="text-xs text-muted-foreground text-center mt-2">
-                          +{analysis.recommendations.length - 3} more actions available
+                        <div className="text-center py-2">
+                          <Badge variant="secondary" className="text-xs">
+                            +{analysis.recommendations.length - 3} more recommendations available
+                          </Badge>
                         </div>
                       )}
                     </div>
                   </div>
                 )}
 
-                <Separator />
+                {/* Risk Factors */}
+                {analysis.riskFactors && analysis.riskFactors.length > 0 && (
+                  <div className="bg-white rounded-xl p-6 border shadow-sm">
+                    <h4 className="font-bold text-lg mb-4 flex items-center gap-3">
+                      <div className="p-2 rounded-lg bg-amber-100">
+                        <AlertTriangle className="h-5 w-5 text-amber-600" />
+                      </div>
+                      Risk Factors Detected
+                    </h4>
+                    <div className="space-y-3">
+                      {analysis.riskFactors.map((risk, index) => (
+                        <div key={index} className="flex items-start gap-3 p-3 bg-amber-50 rounded-lg border-l-3 border-amber-400">
+                          <div className="w-2 h-2 rounded-full bg-amber-500 mt-2 flex-shrink-0"></div>
+                          <span className="text-amber-800 text-sm leading-relaxed">{risk}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Refresh Button */}
-                <div className="flex justify-center">
+                <div className="pt-4">
                   <Button 
                     onClick={analyzeAirQuality} 
                     variant="outline"
-                    size="sm"
                     disabled={isAnalyzing}
-                    className="w-full max-w-sm"
+                    className="w-full h-12 text-base font-medium bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200 hover:from-blue-100 hover:to-purple-100 transition-all duration-300"
                   >
-                    <RefreshCw className="h-4 w-4 mr-2" />
-                    {t('refreshAnalysis')}
+                    <RefreshCw className="h-5 w-5 mr-3" />
+                    Refresh Analysis
                   </Button>
                 </div>
               </div>
@@ -304,54 +382,84 @@ export function AIAnalyzerSection({ readings, lng }: AIAnalyzerSectionProps) {
           </CardContent>
         </Card>
 
-        {/* Pollutant Details Card */}
-        <Card className="shadow-lg">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-purple-600" />
-              Pollutant Breakdown
-            </CardTitle>
-            <CardDescription>
-              Detailed analysis of individual pollutant levels
-            </CardDescription>
+        {/* Pollutant Details Card - Takes 1 column */}
+        <Card className="shadow-xl border-0 bg-gradient-to-br from-white to-gray-50">
+          <CardHeader className="pb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-gradient-to-r from-purple-100 to-pink-100">
+                <TrendingUp className="h-5 w-5 text-purple-600" />
+              </div>
+              <div>
+                <CardTitle className="text-lg font-bold">Sensor Readings</CardTitle>
+                <CardDescription className="text-sm">Live data from BreatheEasy device</CardDescription>
+              </div>
+            </div>
           </CardHeader>
+          
           <CardContent>
             {readings ? (
               <div className="space-y-6">
                 {pollutantDetails.map((pollutant, index) => (
-                  <div key={index} className="space-y-3">
+                  <div key={index} className="group space-y-4 p-4 rounded-xl bg-white border shadow-sm hover:shadow-md transition-all duration-300">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        {pollutant.icon}
-                        <span className="font-medium text-sm">{pollutant.name}</span>
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg bg-gradient-to-r ${pollutant.gradient} text-white group-hover:scale-110 transition-transform`}>
+                          {pollutant.icon}
+                        </div>
+                        <div>
+                          <span className="font-semibold text-gray-900">{pollutant.name}</span>
+                          <p className="text-xs text-gray-500">{pollutant.description}</p>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="text-right">
+                        <div className="text-lg font-bold text-gray-900">
+                          {pollutant.value} <span className="text-sm font-normal text-gray-500">{pollutant.unit}</span>
+                        </div>
                         <Badge 
                           variant="secondary" 
-                          className={`text-xs ${getStatusColor(pollutant.status)}`}
+                          className={`text-xs mt-1 ${
+                            pollutant.status === 'good' ? 'bg-green-100 text-green-700' :
+                            pollutant.status === 'moderate' ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-red-100 text-red-700'
+                          }`}
                         >
                           {pollutant.status}
                         </Badge>
-                        <span className="text-sm font-mono">
-                          {pollutant.value} {pollutant.unit}
-                        </span>
                       </div>
                     </div>
-                    <Progress 
-                      value={pollutant.percentage} 
-                      className="h-2"
-                    />
-                    <p className="text-xs text-muted-foreground">
-                      {pollutant.description}
-                    </p>
-                    {index < pollutantDetails.length - 1 && <Separator />}
+                    
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-xs text-gray-500">
+                        <span>Level</span>
+                        <span>{Math.round(pollutant.percentage)}%</span>
+                      </div>
+                      <Progress 
+                        value={pollutant.percentage} 
+                        className="h-2 bg-gray-100"
+                      />
+                    </div>
                   </div>
                 ))}
+                
+                <div className="mt-6 p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl border border-blue-100">
+                  <div className="flex items-center gap-2 text-sm text-blue-700">
+                    <Activity className="h-4 w-4" />
+                    <span className="font-medium">Device Status: Active</span>
+                  </div>
+                  <p className="text-xs text-blue-600 mt-1">All sensors operational and reporting</p>
+                </div>
               </div>
             ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <TrendingUp className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Waiting for sensor data...</p>
+              <div className="text-center py-12 space-y-4">
+                <div className="relative">
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-r from-gray-100 to-blue-100 animate-pulse mx-auto flex items-center justify-center">
+                    <TrendingUp className="h-8 w-8 text-blue-500" />
+                  </div>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-1">Initializing Sensors</h3>
+                  <p className="text-sm text-gray-600">Connecting to BreatheEasy device...</p>
+                </div>
               </div>
             )}
           </CardContent>
