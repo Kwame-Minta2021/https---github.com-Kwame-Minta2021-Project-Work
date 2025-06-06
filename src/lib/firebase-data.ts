@@ -81,7 +81,7 @@ export function subscribeToRealtimeData(callback: (data: AirQualityData | null) 
     return () => {};
   }
 
-  const dataRef = ref(database, '/');
+  const dataRef = ref(database, '/sensorData');
   
   const unsubscribe = onValue(dataRef, (snapshot) => {
     const data = snapshot.val() as FirebaseRealtimeData;

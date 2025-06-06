@@ -9,6 +9,9 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  allowedDevOrigins: [
+    'https://*.replit.dev',
+  ],
   images: {
     remotePatterns: [
       {
