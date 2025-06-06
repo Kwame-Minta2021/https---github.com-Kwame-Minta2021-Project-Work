@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -7,16 +6,6 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Loader2, Brain, AlertTriangle, CheckCircle, Info } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-
-interface AirQualityData {
-  co: { value: number; unit: string };
-  vocs: { value: number; unit: string };
-  ch4Lpg: { value: number; unit: string };
-  pm1_0: { value: number; unit: string };
-  pm2_5: { value: number; unit: string };
-  pm10: { value: number; unit: string };
-  timestamp: Date;
-}
 
 interface AIAnalyzerSectionProps {
   readings: {
@@ -27,7 +16,6 @@ interface AIAnalyzerSectionProps {
     pm25: number;
     pm100: number;
   };
-  dataHistory: AirQualityData[];
   lng: string;
 }
 
@@ -39,12 +27,11 @@ interface AnalysisResult {
   riskFactors: string[];
 }
 
-export function AIAnalyzerSection({ readings, dataHistory, lng }: AIAnalyzerSectionProps) {
+export default function AIAnalyzerSection({ readings, lng }: AIAnalyzerSectionProps) {
   const { t } = useTranslation();
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [lastAnalysisTime, setLastAnalysisTime] = useState<number>(0);
 
   const analyzeAirQuality = async () => {
     if (!readings) return;
@@ -59,15 +46,12 @@ export function AIAnalyzerSection({ readings, dataHistory, lng }: AIAnalyzerSect
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          sensorData: {
-            CO_ppm: readings.co,
-            VOCs_ppm: readings.vocs,
-            CH4_LPG_ppm: readings.ch4Lpg,
-            PM1_0_ug_m3: readings.pm10,
-            PM2_5_ug_m3: readings.pm25,
-            PM10_ug_m3: readings.pm100,
-          },
-          dataHistory: dataHistory.slice(-10), // Last 10 readings for trend analysis
+          co: readings.co,
+          vocs: readings.vocs,
+          ch4Lpg: readings.ch4Lpg,
+          pm10: readings.pm10,
+          pm25: readings.pm25,
+          pm100: readings.pm100,
           language: lng,
         }),
       });
@@ -78,7 +62,6 @@ export function AIAnalyzerSection({ readings, dataHistory, lng }: AIAnalyzerSect
 
       const result = await response.json();
       setAnalysis(result);
-      setLastAnalysisTime(Date.now());
     } catch (err) {
       console.error('AI Analysis Error:', err);
       setError(err instanceof Error ? err.message : 'Analysis failed');
@@ -88,34 +71,10 @@ export function AIAnalyzerSection({ readings, dataHistory, lng }: AIAnalyzerSect
   };
 
   useEffect(() => {
-    const now = Date.now();
-    const tenMinutes = 10 * 60 * 1000; // 10 minutes in milliseconds
-    
-    // Run analysis if: no previous analysis, or 10 minutes have passed, or manual retry
-    if (readings && !isAnalyzing && (
-      !analysis || 
-      (now - lastAnalysisTime) >= tenMinutes ||
-      error
-    )) {
-      console.log('AIAnalyzerSection: Running analysis - 10 minutes passed or first run');
+    if (readings && !analysis && !isAnalyzing) {
       analyzeAirQuality();
     }
-  }, [readings, isAnalyzing, analysis, lastAnalysisTime, error]);
-
-  // Set up interval for automatic 10-minute analysis
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const now = Date.now();
-      const tenMinutes = 10 * 60 * 1000;
-      
-      if (readings && !isAnalyzing && (now - lastAnalysisTime) >= tenMinutes) {
-        console.log('AIAnalyzerSection: Running scheduled 10-minute analysis');
-        analyzeAirQuality();
-      }
-    }, 60000); // Check every minute
-
-    return () => clearInterval(interval);
-  }, [readings, isAnalyzing, lastAnalysisTime]);
+  }, [readings]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -144,124 +103,104 @@ export function AIAnalyzerSection({ readings, dataHistory, lng }: AIAnalyzerSect
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Brain className="h-6 w-6 text-blue-600" />
-          {t('aiAnalysis')}
-        </CardTitle>
-        <CardDescription>
-          {t('aiAnalysisDescription')}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {!readings && (
-          <div className="text-center py-8 text-muted-foreground">
-            {t('waitingForData')}
-          </div>
-        )}
-
-        {error && (
-          <div className="text-center py-4">
-            <p className="text-red-600 mb-4">{error}</p>
-            <Button 
-              onClick={analyzeAirQuality} 
-              variant="outline"
-              disabled={!readings}
-            >
-              {t('retryAnalysis')}
-            </Button>
-          </div>
-        )}
-
-        {isAnalyzing && (
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-            <span className="ml-2 text-muted-foreground">{t('analyzingData')}</span>
-          </div>
-        )}
-
-        {analysis && !isAnalyzing && (
-          <div className="space-y-4">
-            {/* Overall Status */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                {getStatusIcon(analysis.overallStatus)}
-                <span className="font-medium">{t('overallStatus')}</span>
-              </div>
-              <Badge className={getStatusColor(analysis.overallStatus)}>
-                {t(`status_${analysis.overallStatus}`)}
-              </Badge>
+    <section id="ai-analyzer" className="mb-8 scroll-mt-20">
+      <h2 className="text-2xl font-semibold tracking-tight mb-4">{t('aiAnalyzer')}</h2>
+      <Card className="shadow-lg">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Brain className="h-6 w-6 text-blue-600" />
+            {t('rlModelAnalysis')}
+          </CardTitle>
+          <CardDescription>
+            {t('rlModelAnalysisDesc')}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {!readings && (
+            <div className="text-center py-8 text-muted-foreground">
+              {t('waitingForData')}
             </div>
+          )}
 
-            {/* Summary */}
-            <div>
-              <h4 className="font-semibold mb-2">{t('summary')}</h4>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {analysis.summary}
-              </p>
-            </div>
-
-            {/* Health Impact */}
-            <div>
-              <h4 className="font-semibold mb-2">{t('healthImpact')}</h4>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {analysis.healthImpact}
-              </p>
-            </div>
-
-            {/* Risk Factors */}
-            {analysis.riskFactors && analysis.riskFactors.length > 0 && (
-              <div>
-                <h4 className="font-semibold mb-2">{t('riskFactors')}</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  {analysis.riskFactors.map((factor, index) => (
-                    <li key={index} className="flex items-start gap-2">
-                      <span className="text-red-500 mt-1">•</span>
-                      <span>{factor}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Recommendations */}
-            {analysis.recommendations && analysis.recommendations.length > 0 && (
-              <div>
-                <h4 className="font-semibold mb-2">{t('recommendations')}</h4>
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  {analysis.recommendations.map((rec, index) => (
-                    <li key={index} className="flex items-start gap-2">
-                      <span className="text-blue-500 mt-1">•</span>
-                      <span>{rec}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
-            {/* Refresh Button */}
-            <div className="pt-4 border-t">
+          {error && (
+            <div className="text-center py-4">
+              <p className="text-red-600 mb-4">{error}</p>
               <Button 
                 onClick={analyzeAirQuality} 
                 variant="outline"
-                size="sm"
-                disabled={isAnalyzing}
-                className="w-full"
+                disabled={!readings}
               >
-                {isAnalyzing ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    {t('analyzing')}
-                  </>
-                ) : (
-                  t('refreshAnalysis')
-                )}
+                {t('retryAnalysis')}
               </Button>
             </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          )}
+
+          {isAnalyzing && (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+              <span className="ml-2 text-muted-foreground">{t('analyzingData')}</span>
+            </div>
+          )}
+
+          {analysis && !isAnalyzing && (
+            <div className="space-y-4">
+              {/* Overall Status */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {getStatusIcon(analysis.overallStatus)}
+                  <span className="font-medium">{t('overallStatus')}</span>
+                </div>
+                <Badge className={getStatusColor(analysis.overallStatus)}>
+                  {t(`status_${analysis.overallStatus}`)}
+                </Badge>
+              </div>
+
+              {/* Summary */}
+              <div>
+                <h4 className="font-semibold mb-2">{t('effectOnHumanHealth')}</h4>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {analysis.healthImpact}
+                </p>
+              </div>
+
+              {/* Recommendations */}
+              {analysis.recommendations && analysis.recommendations.length > 0 && (
+                <div>
+                  <h4 className="font-semibold mb-2">{t('bestActionToReducePresence')}</h4>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    {analysis.recommendations.map((rec, index) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <span className="text-blue-500 mt-1">•</span>
+                        <span>{rec}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Refresh Button */}
+              <div className="pt-4 border-t">
+                <Button 
+                  onClick={analyzeAirQuality} 
+                  variant="outline"
+                  size="sm"
+                  disabled={isAnalyzing}
+                  className="w-full"
+                >
+                  {isAnalyzing ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      {t('analyzing')}
+                    </>
+                  ) : (
+                    t('refreshAnalysis')
+                  )}
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </section>
   );
 }

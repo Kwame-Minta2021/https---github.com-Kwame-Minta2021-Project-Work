@@ -1,11 +1,12 @@
+
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { AIAnalyzerSection } from './ai-analyzer-section';
+import AIAnalyzerSection from './ai-analyzer-section';
 import { subscribeToRealtimeData } from '@/lib/firebase-data';
-import type { AirQualityData, AnalyzeAirQualityInput } from '@/types';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import type { AirQualityData } from '@/types';
 import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { useTranslation } from 'react-i18next';
 
 interface AIAnalyzerWrapperProps {
@@ -45,19 +46,12 @@ function AIAnalyzerSkeleton({ t }: { t: (key: string) => string }) {
 export default function AIAnalyzerWrapper({ lng }: AIAnalyzerWrapperProps) {
   const { t } = useTranslation();
   const [realtimeData, setRealtimeData] = useState<AirQualityData | null>(null);
-  const [dataHistory, setDataHistory] = useState<AirQualityData[]>([]);
 
   useEffect(() => {
     console.log("AIAnalyzerWrapper: Setting up Firebase real-time data subscription");
     const unsubscribe = subscribeToRealtimeData((data) => {
       if (data) {
         setRealtimeData(data);
-        // Store data for trend analysis
-        setDataHistory(prev => {
-          const newHistory = [...prev, data];
-          // Keep only last 20 readings for trend analysis (covers more than 10 minutes of data)
-          return newHistory.slice(-20);
-        });
         console.log("AIAnalyzerWrapper: Received real-time data for AI analysis:", data);
       }
     });
@@ -72,7 +66,7 @@ export default function AIAnalyzerWrapper({ lng }: AIAnalyzerWrapperProps) {
     return <AIAnalyzerSkeleton t={t} />;
   }
 
-  const rawSensorReadingsForAnalyzer: Omit<AnalyzeAirQualityInput, 'language'> = {
+  const rawSensorReadings = {
     co: realtimeData.co.value,
     vocs: realtimeData.vocs.value,
     ch4Lpg: realtimeData.ch4Lpg.value,
@@ -83,8 +77,7 @@ export default function AIAnalyzerWrapper({ lng }: AIAnalyzerWrapperProps) {
 
   return (
     <AIAnalyzerSection 
-      readings={rawSensorReadingsForAnalyzer} 
-      dataHistory={dataHistory}
+      readings={rawSensorReadings} 
       lng={lng} 
     />
   );
