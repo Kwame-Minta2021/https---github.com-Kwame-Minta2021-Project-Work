@@ -2,11 +2,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import AIAnalyzerSection from './ai-analyzer-section';
+import { AIAnalyzerSection } from './ai-analyzer-section';
 import { subscribeToRealtimeData } from '@/lib/firebase-data';
-import type { AirQualityData, AnalyzeAirQualityInput } from '@/types';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import type { AirQualityData } from '@/types';
 import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { useTranslation } from 'react-i18next';
 
 interface AIAnalyzerWrapperProps {
@@ -66,7 +66,7 @@ export default function AIAnalyzerWrapper({ lng }: AIAnalyzerWrapperProps) {
     return <AIAnalyzerSkeleton t={t} />;
   }
 
-  const rawSensorReadingsForAnalyzer: Omit<AnalyzeAirQualityInput, 'language'> = {
+  const rawSensorReadings = {
     co: realtimeData.co.value,
     vocs: realtimeData.vocs.value,
     ch4Lpg: realtimeData.ch4Lpg.value,
@@ -76,6 +76,9 @@ export default function AIAnalyzerWrapper({ lng }: AIAnalyzerWrapperProps) {
   };
 
   return (
-    <AIAnalyzerSection readings={rawSensorReadingsForAnalyzer} lng={lng} />
+    <AIAnalyzerSection 
+      readings={rawSensorReadings} 
+      lng={lng} 
+    />
   );
 }

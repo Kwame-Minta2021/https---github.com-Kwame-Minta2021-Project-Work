@@ -3,13 +3,15 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BarChart, LineChart as RechartsLineChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, CartesianGrid, Bar, Line, Cell } from 'recharts';
 import { MOCK_BAR_CHART_DATA, CHART_CONFIG } from '@/lib/constants';
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 import type { HistoricalDataPoint } from '@/types';
-import { parseISO, format, differenceInDays, isValid } from 'date-fns';
-import React from "react";
-import { Info } from "lucide-react";
+import { parseISO, format, differenceInDays, isValid, subDays, subHours, isAfter, isBefore } from 'date-fns';
+import React, { useState, useMemo } from "react";
+import { Info, Calendar, Filter } from "lucide-react";
 import { useTranslation } from 'react-i18next';
 
 interface DataVisualizationProps {
@@ -39,7 +41,89 @@ const GuidelineItem: React.FC<GuidelineInfoProps> = ({ pollutant, guidelines, ge
 
 
 export default function DataVisualization({ historicalData }: DataVisualizationProps) {
-  const { t } = useTranslation(); 
+  const { t } = useTranslation();
+  const [dateRange, setDateRange] = useState<string>('24h');
+  const [activeTab, setActiveTab] = useState<string>('line');
+
+  const filteredData = useMemo(() => {
+    if (!historicalData || historicalData.length === 0) return [];
+
+    const now = new Date();
+    let startDate: Date;
+
+    switch (dateRange) {
+      case '1h':
+        startDate = subHours(now, 1);
+        break;
+      case '6h':
+        startDate = subHours(now, 6);
+        break;
+      case '24h':
+        startDate = subDays(now, 1);
+        break;
+      case '7d':
+        startDate = subDays(now, 7);
+        break;
+      case '30d':
+        startDate = subDays(now, 30);
+        break;
+      default:
+        startDate = subDays(now, 1);
+    }
+
+    return historicalData.filter(point => {
+      try {
+        const pointDate = parseISO(point.timestamp);
+        return isValid(pointDate) && isAfter(pointDate, startDate) && isBefore(pointDate, now);
+      } catch {
+        return false;
+      }
+    });
+  }, [historicalData, dateRange]);
+
+  const currentData = useMemo(() => {
+    if (!filteredData || filteredData.length === 0) return MOCK_BAR_CHART_DATA;
+    
+    const latest = filteredData[filteredData.length - 1];
+    return [
+      { 
+        name: 'CO', 
+        value: parseFloat((latest.CO || 0).toString()), 
+        fill: "var(--color-CO)",
+        unit: 'ppm'
+      },
+      { 
+        name: 'VOCs', 
+        value: parseFloat((latest.VOCs || 0).toString()), 
+        fill: "var(--color-VOCs)",
+        unit: 'ppm'
+      },
+      { 
+        name: 'PM2.5', 
+        value: parseFloat((latest.PM25 || 0).toString()), 
+        fill: "var(--color-PM25)",
+        unit: 'µg/m³'
+      },
+      { 
+        name: 'PM1.0', 
+        value: parseFloat((latest.PM10 || 0).toString()), 
+        fill: "var(--color-PM10)",
+        unit: 'µg/m³'
+      },
+      { 
+        name: 'PM10', 
+        value: parseFloat((latest.PM100 || 0).toString()), 
+        fill: "var(--color-PM100)",
+        unit: 'µg/m³'
+      },
+      { 
+        name: 'CH4/LPG', 
+        value: parseFloat((latest.CH4LPG || 0).toString()), 
+        fill: "var(--color-CH4LPG)",
+        unit: 'ppm'
+      }
+    ];
+  }, [filteredData]); 
   
   const xAxisTickFormatter = (isoTimestamp: string) => {
     if (!historicalData || historicalData.length === 0) {
@@ -89,22 +173,64 @@ export default function DataVisualization({ historicalData }: DataVisualizationP
   
   return (
     <section id="visualizations" className="mb-8 scroll-mt-20">
-      <h2 className="text-2xl font-semibold tracking-tight mb-4">{t('dataVisualizations')}</h2>
-      <Tabs defaultValue="line" className="w-full">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <h2 className="text-2xl font-semibold tracking-tight">{t('dataVisualizations')}</h2>
+        
+        {/* Date Range Selector */}
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Calendar className="h-4 w-4" />
+            <span>Time Range:</span>
+          </div>
+          <Select value={dateRange} onValueChange={setDateRange}>
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1h">Last Hour</SelectItem>
+              <SelectItem value="6h">Last 6 Hours</SelectItem>
+              <SelectItem value="24h">Last 24 Hours</SelectItem>
+              <SelectItem value="7d">Last 7 Days</SelectItem>
+              <SelectItem value="30d">Last 30 Days</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <Tabs defaultValue="line" className="w-full" onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3 mb-4">
-          <TabsTrigger value="line">{t('lineCharts')}</TabsTrigger>
+          <TabsTrigger value="line" className="flex items-center gap-2">
+            <Filter className="h-4 w-4" />
+            {t('lineCharts')}
+          </TabsTrigger>
           <TabsTrigger value="bar">{t('barGraphs')}</TabsTrigger>
           <TabsTrigger value="guidelines">{t('aqGuidelines')}</TabsTrigger>
         </TabsList>
         <TabsContent value="line">
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle>{t('pollutantTrends')}</CardTitle>
-              <CardDescription>{t('hourlyTrends')}</CardDescription>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle>{t('pollutantTrends')}</CardTitle>
+                  <CardDescription>
+                    {filteredData.length > 0 
+                      ? `Showing ${filteredData.length} data points for the selected period`
+                      : 'No data available for the selected time range'
+                    }
+                  </CardDescription>
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                    <span>Real-time data</span>
+                  </div>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
-              <ChartContainer config={CHART_CONFIG} className="h-[400px] w-full">
-                <RechartsLineChart data={historicalData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+              {filteredData.length > 0 ? (
+                <ChartContainer config={CHART_CONFIG} className="h-[400px] w-full">
+                  <RechartsLineChart data={filteredData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis 
                     dataKey="timestamp" 
@@ -116,11 +242,23 @@ export default function DataVisualization({ historicalData }: DataVisualizationP
                   <YAxis tickLine={false} axisLine={false} tickMargin={8} />
                   <Tooltip cursor={{ fill: "hsl(var(--accent) / 0.1)" }} content={<ChartTooltipContent hideLabel />} />
                   <Legend />
-                  <Line type="monotone" dataKey="CO" name="CO (ppm)" stroke="var(--color-CO)" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="VOCs" name="VOCs (ppm)" stroke="var(--color-VOCs)" strokeWidth={2} dot={false} activeDot={{r:6}} />
-                  <Line type="monotone" dataKey="PM25" name="PM2.5 (µg/m³)" stroke="var(--color-PM25)" strokeWidth={2} dot={false} activeDot={{r:6}} />
-                </RechartsLineChart>
-              </ChartContainer>
+                  <Line type="monotone" dataKey="CO" name="CO (ppm)" stroke="var(--color-CO)" strokeWidth={2} dot={false} activeDot={{r:6}} />
+                    <Line type="monotone" dataKey="VOCs" name="VOCs (ppm)" stroke="var(--color-VOCs)" strokeWidth={2} dot={false} activeDot={{r:6}} />
+                    <Line type="monotone" dataKey="PM25" name="PM2.5 (µg/m³)" stroke="var(--color-PM25)" strokeWidth={2} dot={false} activeDot={{r:6}} />
+                    <Line type="monotone" dataKey="PM10" name="PM1.0 (µg/m³)" stroke="var(--color-PM10)" strokeWidth={2} dot={false} activeDot={{r:6}} />
+                    <Line type="monotone" dataKey="PM100" name="PM10 (µg/m³)" stroke="var(--color-PM100)" strokeWidth={2} dot={false} activeDot={{r:6}} />
+                    <Line type="monotone" dataKey="CH4LPG" name="CH4/LPG (ppm)" stroke="var(--color-CH4LPG)" strokeWidth={2} dot={false} activeDot={{r:6}} />
+                  </RechartsLineChart>
+                </ChartContainer>
+              ) : (
+                <div className="flex items-center justify-center h-[400px] text-muted-foreground">
+                  <div className="text-center">
+                    <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p className="text-lg font-medium mb-2">No Data Available</p>
+                    <p className="text-sm">Try selecting a different time range or check back later</p>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -128,18 +266,22 @@ export default function DataVisualization({ historicalData }: DataVisualizationP
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle>{t('currentPollutantLevels')}</CardTitle>
-              <CardDescription>{t('currentPollutantDesc')}</CardDescription>
+              <CardDescription>
+                Current levels based on the most recent readings in the selected time range
+              </CardDescription>
             </CardHeader>
             <CardContent>
                <ChartContainer config={CHART_CONFIG} className="h-[400px] w-full">
-                <BarChart data={MOCK_BAR_CHART_DATA} layout="vertical" margin={{ top: 5, right: 20, left: 30, bottom: 5 }}>
+                <BarChart data={currentData} layout="vertical" margin={{ top: 5, right: 20, left: 30, bottom: 5 }}>
                   <CartesianGrid horizontal={false} />
                   <XAxis type="number" hide />
                   <YAxis dataKey="name" type="category" tickLine={false} axisLine={false} tickMargin={8} width={80} />
-                  <Tooltip cursor={{ fill: "hsl(var(--accent) / 0.1)" }} content={<ChartTooltipContent indicator="dot" />} />
+                  <Tooltip cursor={{ fill: "hsl(var(--accent) / 0.1)" }} content={<ChartTooltipContent indicator="dot" formatter={(value, name, props) => [
+                    `${value} ${props.payload?.unit || ''}`, name
+                  ]} />} />
                   <Legend />
                   <Bar dataKey="value" radius={5}>
-                     {MOCK_BAR_CHART_DATA.map((entry, index) => (
+                     {currentData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.fill as string} />
                       ))}
                   </Bar>

@@ -1,0 +1,49 @@
+Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <PopperProvider scope={{Popper:[...]}} anchor={null} onAnchorChange={function bound dispatchSetState}>
+      <TooltipProvider scope={undefined} contentId="radix-«Rq6..." open={false} stateAttribute="closed" trigger={null} ...>
+        <TooltipTrigger asChild={true}>
+          <PopperAnchor asChild={true} __scopePopper={{Popper:[...]}}>
+            <Primitive.div asChild={true} ref={function}>
+              <Slot ref={function}>
+                <SlotClone ref={function}>
+                  <Primitive.button aria-describedby={undefined} data-state="closed" asChild={true} ref={function} ...>
+                    <Slot aria-describedby={undefined} data-state="closed" onPointerMove={function handleEvent} ...>
+                      <SlotClone aria-describedby={undefined} data-state="closed" onPointerMove={function handleEvent} ...>
+                        <Slot ref={function} data-sidebar="menu-button" data-size="default" data-active={true} ...>
+                          <SlotClone data-sidebar="menu-button" data-size="default" data-active={true} ...>
+                            <a data-sidebar="menu-button" data-size="default" data-active={true} ...>
+                              <LayoutDashboard>
+                              <span>
++                               sidebarDashboard
+-                               Dashboard
+        ...
+
+    at throwOnHydrationMismatch (https://78dc3053-ab70-432f-ab3d-e072fabebec7-00-1gcg11nle4ats.spock.replit.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:9266:56)
+    at prepareToHydrateHostInstance (https://78dc3053-ab70-432f-ab3d-e072fabebec7-00-1gcg11nle4ats.spock.replit.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:9321:23)
+    at completeWork (https://78dc3053-ab70-432f-ab3d-e072fabebec7-00-1gcg11nle4ats.spock.replit.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:9487:60)
+    at runWithFiberInDEV (https://78dc3053-ab70-432f-ab3d-e072fabebec7-00-1gcg11nle4ats.spock.replit.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:3501:74)
+    at completeUnitOfWork (https://78dc3053-ab70-432f-ab3d-e072fabebec7-00-1gcg11nle4ats.spock.replit.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:10233:23)
+    at performUnitOfWork (https://78dc3053-ab70-432f-ab3d-e072fabebec7-00-1gcg11nle4ats.spock.replit.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:10170:28)
+    at workLoopConcurrentByScheduler (https://78dc3053-ab70-432f-ab3d-e072fabebec7-00-1gcg11nle4ats.spock.replit.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:10164:58)
+    at renderRootConcurrent (https://78dc3053-ab70-432f-ab3d-e072fabebec7-00-1gcg11nle4ats.spock.replit.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:10146:71)
+    at performWorkOnRoot (https://78dc3053-ab70-432f-ab3d-e072fabebec7-00-1gcg11nle4ats.spock.replit.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:9784:176)
+    at performWorkOnRootViaSchedulerTask (https://78dc3053-ab70-432f-ab3d-e072fabebec7-00-1gcg11nle4ats.spock.replit.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:10796:9)
+    at MessagePort.performWorkUntilDeadline (https://78dc3053-ab70-432f-ab3d-e072fabebec7-00-1gcg11nle4ats.spock.replit.dev/_next/static/chunks/node_modules_next_dist_compiled_2ce9398a._.js:1952:64)
+    at span (<anonymous>)
+    at https://78dc3053-ab70-432f-ab3d-e072fabebec7-00-1gcg11nle4ats.spock.replit.dev/_next/static/chunks/src_e32b3a7b._.js:1519:235
+    at Array.map (<anonymous>)
+    at SidebarNav (https://78dc3053-ab70-432f-ab3d-e072fabebec7-00-1gcg11nle4ats.spock.replit.dev/_next/static/chunks/src_e32b3a7b._.js:1498:28)
+    at DashboardLayout (https://78dc3053-ab70-432f-ab3d-e072fabebec7-00-1gcg11nle4ats.spock.replit.dev/_next/static/chunks/src_e32b3a7b._.js:3225:237)
+    at ClientSegmentRoot (https://78dc3053-ab70-432f-ab3d-e072fabebec7-00-1gcg11nle4ats.spock.replit.dev/_next/static/chunks/node_modules_next_dist_1a6ee436._.js:2108:50)

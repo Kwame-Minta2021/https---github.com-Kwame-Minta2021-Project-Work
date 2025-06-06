@@ -1,4 +1,3 @@
-
 import type { AirQualityData, HistoricalDataPoint, SensorReadingThresholds } from '@/types';
 // Removed direct LucideIcon imports as they are handled in RealtimeDataCard
 import { subDays, formatISO, startOfHour, setHours, parseISO, eachDayOfInterval, format } from 'date-fns';
@@ -65,14 +64,28 @@ export const MOCK_BAR_CHART_DATA = [
 ];
 
 export const CHART_CONFIG = {
-  co: { label: "CO (ppm)", color: MOCK_AIR_QUALITY_DATA.co.color },
-  vocs: { label: "VOCs (ppm)", color: MOCK_AIR_QUALITY_DATA.vocs.color },
-  ch4Lpg: { label: "CH4/LPG (ppm)", color: MOCK_AIR_QUALITY_DATA.ch4Lpg.color },
-  pm1_0: { label: "PM1.0 (µg/m³)", color: MOCK_AIR_QUALITY_DATA.pm1_0.color },
-  pm2_5: { label: "PM2.5 (µg/m³)", color: MOCK_AIR_QUALITY_DATA.pm2_5.color },
-  pm10: { label: "PM10 (µg/m³)", color: MOCK_AIR_QUALITY_DATA.pm10.color },
-  CO: { label: "CO (ppm)", color: MOCK_AIR_QUALITY_DATA.co.color },
-  VOCs: { label: "VOCs (ppm)", color: MOCK_AIR_QUALITY_DATA.vocs.color },
-  PM25: { label: "PM2.5 (µg/m³)", color: MOCK_AIR_QUALITY_DATA.pm2_5.color },
+  CO: {
+    label: "CO",
+    color: "hsl(var(--chart-1))",
+  },
+  VOCs: {
+    label: "VOCs", 
+    color: "hsl(var(--chart-2))",
+  },
+  PM25: {
+    label: "PM2.5",
+    color: "hsl(var(--chart-3))",
+  },
+  PM10: {
+    label: "PM1.0",
+    color: "hsl(var(--chart-4))",
+  },
+  PM100: {
+    label: "PM10",
+    color: "hsl(var(--chart-5))",
+  },
+  CH4LPG: {
+    label: "CH4/LPG",
+    color: "hsl(var(--chart-1))",
+  },
 } as const;
-
