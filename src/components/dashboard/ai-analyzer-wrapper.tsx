@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import AIAnalyzerSection from './ai-analyzer-section';
+import { AIAnalyzerSection } from './ai-analyzer-section';
 import { subscribeToRealtimeData } from '@/lib/firebase-data';
 import type { AirQualityData } from '@/types';
 import { Skeleton } from "@/components/ui/skeleton";
