@@ -66,18 +66,9 @@ export default function AIAnalyzerWrapper({ lng }: AIAnalyzerWrapperProps) {
     return <AIAnalyzerSkeleton t={t} />;
   }
 
-  const rawSensorReadings = {
-    co: realtimeData.co.value,
-    vocs: realtimeData.vocs.value,
-    ch4Lpg: realtimeData.ch4Lpg.value,
-    pm10: realtimeData.pm1_0.value,
-    pm25: realtimeData.pm2_5.value,
-    pm100: realtimeData.pm10.value,
-  };
-
   return (
     <AIAnalyzerSection 
-      readings={rawSensorReadings} 
+      readings={realtimeData} 
       lng={lng} 
     />
   );

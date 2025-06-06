@@ -53,12 +53,12 @@ export function AIAnalyzerSection({ readings, lng }: AIAnalyzerSectionProps) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          co: readings.co.value,
-          vocs: readings.vocs.value,
-          ch4Lpg: readings.ch4Lpg.value,
-          pm10: readings.pm1_0.value,
-          pm25: readings.pm2_5.value,
-          pm100: readings.pm10.value,
+          co: readings.co?.value || 0,
+          vocs: readings.vocs?.value || 0,
+          ch4Lpg: readings.ch4Lpg?.value || 0,
+          pm10: readings.pm1_0?.value || 0,
+          pm25: readings.pm2_5?.value || 0,
+          pm100: readings.pm10?.value || 0,
           language: lng,
         }),
       });
@@ -126,37 +126,37 @@ export function AIAnalyzerSection({ readings, lng }: AIAnalyzerSectionProps) {
   const pollutantDetails: PollutantDetail[] = readings ? [
     {
       name: 'Carbon Monoxide',
-      value: readings.co.value,
-      unit: readings.co.unit,
-      status: getPollutantStatus(readings.co.value, readings.co.thresholds),
-      percentage: getPollutantPercentage(readings.co.value, readings.co.thresholds),
+      value: readings.co?.value || 0,
+      unit: readings.co?.unit || 'ppm',
+      status: getPollutantStatus(readings.co?.value || 0, readings.co?.thresholds),
+      percentage: getPollutantPercentage(readings.co?.value || 0, readings.co?.thresholds),
       icon: <Zap className="h-4 w-4" />,
       description: 'Colorless, odorless gas from combustion'
     },
     {
       name: 'VOCs',
-      value: readings.vocs.value,
-      unit: readings.vocs.unit,
-      status: getPollutantStatus(readings.vocs.value, readings.vocs.thresholds),
-      percentage: getPollutantPercentage(readings.vocs.value, readings.vocs.thresholds),
+      value: readings.vocs?.value || 0,
+      unit: readings.vocs?.unit || 'ppm',
+      status: getPollutantStatus(readings.vocs?.value || 0, readings.vocs?.thresholds),
+      percentage: getPollutantPercentage(readings.vocs?.value || 0, readings.vocs?.thresholds),
       icon: <Wind className="h-4 w-4" />,
       description: 'Organic compounds that evaporate at room temperature'
     },
     {
       name: 'PM2.5',
-      value: readings.pm2_5.value,
-      unit: readings.pm2_5.unit,
-      status: getPollutantStatus(readings.pm2_5.value, readings.pm2_5.thresholds),
-      percentage: getPollutantPercentage(readings.pm2_5.value, readings.pm2_5.thresholds),
+      value: readings.pm2_5?.value || 0,
+      unit: readings.pm2_5?.unit || 'µg/m³',
+      status: getPollutantStatus(readings.pm2_5?.value || 0, readings.pm2_5?.thresholds),
+      percentage: getPollutantPercentage(readings.pm2_5?.value || 0, readings.pm2_5?.thresholds),
       icon: <Shield className="h-4 w-4" />,
       description: 'Fine particles that can penetrate deep into lungs'
     },
     {
       name: 'PM10',
-      value: readings.pm10.value,
-      unit: readings.pm10.unit,
-      status: getPollutantStatus(readings.pm10.value, readings.pm10.thresholds),
-      percentage: getPollutantPercentage(readings.pm10.value, readings.pm10.thresholds),
+      value: readings.pm10?.value || 0,
+      unit: readings.pm10?.unit || 'µg/m³',
+      status: getPollutantStatus(readings.pm10?.value || 0, readings.pm10?.thresholds),
+      percentage: getPollutantPercentage(readings.pm10?.value || 0, readings.pm10?.thresholds),
       icon: <TrendingUp className="h-4 w-4" />,
       description: 'Inhalable particles from dust, pollen, and smoke'
     }
