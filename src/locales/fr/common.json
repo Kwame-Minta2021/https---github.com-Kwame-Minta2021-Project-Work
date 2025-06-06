@@ -46,6 +46,7 @@
   "aiAnalyzer": "Analyseur IA",
   "rlModelAnalysis": "Analyse du Modèle RL",
   "rlModelAnalysisDesc": "Aperçus basés sur l'IA à partir des lectures actuelles de la qualité de l'air, simulant un modèle RL.",
+  "lastUpdated": "Dernière mise à jour",
   "effectOnHumanHealth": "Effet sur la santé humaine",
   "bestActionToReducePresence": "Meilleure action pour réduire la présence",
   "aiChatbot": "Chatbot IA",

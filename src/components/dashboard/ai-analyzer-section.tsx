@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -215,7 +214,7 @@ export function AIAnalyzerSection({ readings, lng }: AIAnalyzerSectionProps) {
               </div>
             </div>
           </CardHeader>
-          
+
           <CardContent className="space-y-8">
             {!readings && (
               <div className="text-center py-12">
@@ -395,52 +394,52 @@ export function AIAnalyzerSection({ readings, lng }: AIAnalyzerSectionProps) {
               </div>
             </div>
           </CardHeader>
-          
+
           <CardContent>
             {readings ? (
               <div className="space-y-6">
                 {pollutantDetails.map((pollutant, index) => (
-                  <div key={index} className="group space-y-4 p-4 rounded-xl bg-white border shadow-sm hover:shadow-md transition-all duration-300">
+                  <div key={index} className="group space-y-3 p-3 rounded-lg bg-white border border-gray-100 hover:border-gray-200 shadow-sm hover:shadow transition-all duration-300">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={`p-2 rounded-lg bg-gradient-to-r ${pollutant.gradient} text-white group-hover:scale-110 transition-transform`}>
+                      <div className="flex items-center gap-2">
+                        <div className={`p-1.5 rounded-lg bg-gradient-to-r ${pollutant.gradient} text-white group-hover:scale-105 transition-transform`}>
                           {pollutant.icon}
                         </div>
                         <div>
-                          <span className="font-semibold text-gray-900">{pollutant.name}</span>
+                          <span className="font-medium text-gray-800 text-sm">{pollutant.name}</span>
                           <p className="text-xs text-gray-500">{pollutant.description}</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-lg font-bold text-gray-900">
-                          {pollutant.value} <span className="text-sm font-normal text-gray-500">{pollutant.unit}</span>
+                        <div className="text-base font-bold text-gray-800">
+                          {pollutant.value} <span className="text-xs font-normal text-gray-500">{pollutant.unit}</span>
                         </div>
                         <Badge 
                           variant="secondary" 
-                          className={`text-xs mt-1 ${
-                            pollutant.status === 'good' ? 'bg-green-100 text-green-700' :
-                            pollutant.status === 'moderate' ? 'bg-yellow-100 text-yellow-700' :
-                            'bg-red-100 text-red-700'
+                          className={`text-xs mt-0.5 ${
+                            pollutant.status === 'good' ? 'bg-emerald-100 text-emerald-700' :
+                            pollutant.status === 'moderate' ? 'bg-amber-100 text-amber-700' :
+                            'bg-rose-100 text-rose-700'
                           }`}
                         >
                           {pollutant.status}
                         </Badge>
                       </div>
                     </div>
-                    
-                    <div className="space-y-2">
+
+                    <div className="space-y-1">
                       <div className="flex justify-between text-xs text-gray-500">
                         <span>Level</span>
                         <span>{Math.round(pollutant.percentage)}%</span>
                       </div>
                       <Progress 
                         value={pollutant.percentage} 
-                        className="h-2 bg-gray-100"
+                        className="h-1.5 bg-gray-100"
                       />
                     </div>
                   </div>
                 ))}
-                
+
                 <div className="mt-6 p-4 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl border border-blue-100">
                   <div className="flex items-center gap-2 text-sm text-blue-700">
                     <Activity className="h-4 w-4" />

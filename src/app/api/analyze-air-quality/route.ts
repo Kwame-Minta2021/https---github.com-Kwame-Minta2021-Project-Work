@@ -6,7 +6,10 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || 'AIzaSyCCEetj
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { co, vocs, ch4Lpg, pm10, pm25, pm100, language = 'en' } = body;
+    const { co, vocs, ch4Lpg: rawCh4Lpg, pm10, pm25, pm100, language = 'en' } = await request.json();
+
+    // Adjust CH4/LPG value by dividing by 18 to get more reasonable readings
+    const ch4Lpg = rawCh4Lpg / 18;
 
     if (co === undefined || vocs === undefined || ch4Lpg === undefined || 
         pm10 === undefined || pm25 === undefined || pm100 === undefined) {
