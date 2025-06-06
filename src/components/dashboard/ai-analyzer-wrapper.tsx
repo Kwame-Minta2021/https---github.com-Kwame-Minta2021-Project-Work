@@ -46,12 +46,19 @@ function AIAnalyzerSkeleton({ t }: { t: (key: string) => string }) {
 export default function AIAnalyzerWrapper({ lng }: AIAnalyzerWrapperProps) {
   const { t } = useTranslation();
   const [realtimeData, setRealtimeData] = useState<AirQualityData | null>(null);
+  const [dataHistory, setDataHistory] = useState<AirQualityData[]>([]);
 
   useEffect(() => {
     console.log("AIAnalyzerWrapper: Setting up Firebase real-time data subscription");
     const unsubscribe = subscribeToRealtimeData((data) => {
       if (data) {
         setRealtimeData(data);
+        // Store data for trend analysis
+        setDataHistory(prev => {
+          const newHistory = [...prev, data];
+          // Keep only last 20 readings for trend analysis (covers more than 10 minutes of data)
+          return newHistory.slice(-20);
+        });
         console.log("AIAnalyzerWrapper: Received real-time data for AI analysis:", data);
       }
     });
@@ -76,6 +83,10 @@ export default function AIAnalyzerWrapper({ lng }: AIAnalyzerWrapperProps) {
   };
 
   return (
-    <AIAnalyzerSection readings={rawSensorReadingsForAnalyzer} lng={lng} />
+    <AIAnalyzerSection 
+      readings={rawSensorReadingsForAnalyzer} 
+      dataHistory={dataHistory}
+      lng={lng} 
+    />
   );
 }

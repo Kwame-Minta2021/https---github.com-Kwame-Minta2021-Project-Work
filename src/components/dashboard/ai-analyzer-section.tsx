@@ -15,10 +15,20 @@ interface AirQualityData {
   pm1_0: { value: number; unit: string };
   pm2_5: { value: number; unit: string };
   pm10: { value: number; unit: string };
+  timestamp: Date;
 }
 
 interface AIAnalyzerSectionProps {
-  airData: AirQualityData | null;
+  readings: {
+    co: number;
+    vocs: number;
+    ch4Lpg: number;
+    pm10: number;
+    pm25: number;
+    pm100: number;
+  };
+  dataHistory: AirQualityData[];
+  lng: string;
 }
 
 interface AnalysisResult {
@@ -29,14 +39,15 @@ interface AnalysisResult {
   riskFactors: string[];
 }
 
-export function AIAnalyzerSection({ airData }: AIAnalyzerSectionProps) {
+export function AIAnalyzerSection({ readings, dataHistory, lng }: AIAnalyzerSectionProps) {
   const { t } = useTranslation();
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [lastAnalysisTime, setLastAnalysisTime] = useState<number>(0);
 
   const analyzeAirQuality = async () => {
-    if (!airData) return;
+    if (!readings) return;
 
     setIsAnalyzing(true);
     setError(null);
@@ -49,13 +60,15 @@ export function AIAnalyzerSection({ airData }: AIAnalyzerSectionProps) {
         },
         body: JSON.stringify({
           sensorData: {
-            CO_ppm: airData.co.value,
-            VOCs_ppm: airData.vocs.value,
-            CH4_LPG_ppm: airData.ch4Lpg.value,
-            PM1_0_ug_m3: airData.pm1_0.value,
-            PM2_5_ug_m3: airData.pm2_5.value,
-            PM10_ug_m3: airData.pm10.value,
+            CO_ppm: readings.co,
+            VOCs_ppm: readings.vocs,
+            CH4_LPG_ppm: readings.ch4Lpg,
+            PM1_0_ug_m3: readings.pm10,
+            PM2_5_ug_m3: readings.pm25,
+            PM10_ug_m3: readings.pm100,
           },
+          dataHistory: dataHistory.slice(-10), // Last 10 readings for trend analysis
+          language: lng,
         }),
       });
 
@@ -65,6 +78,7 @@ export function AIAnalyzerSection({ airData }: AIAnalyzerSectionProps) {
 
       const result = await response.json();
       setAnalysis(result);
+      setLastAnalysisTime(Date.now());
     } catch (err) {
       console.error('AI Analysis Error:', err);
       setError(err instanceof Error ? err.message : 'Analysis failed');
@@ -74,10 +88,34 @@ export function AIAnalyzerSection({ airData }: AIAnalyzerSectionProps) {
   };
 
   useEffect(() => {
-    if (airData && !analysis && !isAnalyzing) {
+    const now = Date.now();
+    const tenMinutes = 10 * 60 * 1000; // 10 minutes in milliseconds
+    
+    // Run analysis if: no previous analysis, or 10 minutes have passed, or manual retry
+    if (readings && !isAnalyzing && (
+      !analysis || 
+      (now - lastAnalysisTime) >= tenMinutes ||
+      error
+    )) {
+      console.log('AIAnalyzerSection: Running analysis - 10 minutes passed or first run');
       analyzeAirQuality();
     }
-  }, [airData]);
+  }, [readings, isAnalyzing, analysis, lastAnalysisTime, error]);
+
+  // Set up interval for automatic 10-minute analysis
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = Date.now();
+      const tenMinutes = 10 * 60 * 1000;
+      
+      if (readings && !isAnalyzing && (now - lastAnalysisTime) >= tenMinutes) {
+        console.log('AIAnalyzerSection: Running scheduled 10-minute analysis');
+        analyzeAirQuality();
+      }
+    }, 60000); // Check every minute
+
+    return () => clearInterval(interval);
+  }, [readings, isAnalyzing, lastAnalysisTime]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -117,7 +155,7 @@ export function AIAnalyzerSection({ airData }: AIAnalyzerSectionProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {!airData && (
+        {!readings && (
           <div className="text-center py-8 text-muted-foreground">
             {t('waitingForData')}
           </div>
@@ -129,7 +167,7 @@ export function AIAnalyzerSection({ airData }: AIAnalyzerSectionProps) {
             <Button 
               onClick={analyzeAirQuality} 
               variant="outline"
-              disabled={!airData}
+              disabled={!readings}
             >
               {t('retryAnalysis')}
             </Button>

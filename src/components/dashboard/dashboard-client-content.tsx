@@ -83,24 +83,42 @@ export default function DashboardClientContent({
   const [realtimeData, setRealtimeData] = React.useState<AirQualityData | null>(null);
 
   useEffect(() => {
-    console.log("DashboardClientContent: Setting up Firebase real-time data subscription");
-    const unsubscribe = subscribeToRealtimeData((data) => {
-      if (data) {
-        setRealtimeData(data);
-        console.log("DashboardClientContent: Received real-time data:", data);
-        
-        // Check alerts with real-time data
-        if (initialCustomAlertSettings && t && toast) {
-          checkAlertsAndNotify(lng, initialCustomAlertSettings, data, t, toast);
+    console.log("DashboardClientContent: Setting up Firebase real-time data subscription with 2-minute intervals");
+    
+    // Function to fetch and update data
+    const fetchData = () => {
+      const unsubscribe = subscribeToRealtimeData((data) => {
+        if (data) {
+          setRealtimeData(data);
+          console.log("DashboardClientContent: Received real-time data:", data);
+          
+          // Check alerts with real-time data
+          if (initialCustomAlertSettings && t && toast) {
+            checkAlertsAndNotify(lng, initialCustomAlertSettings, data, t, toast);
+          }
+        } else {
+          console.warn("DashboardClientContent: No real-time data received");
         }
-      } else {
-        console.warn("DashboardClientContent: No real-time data received");
-      }
-    });
+      });
+      
+      // Unsubscribe after getting one update
+      setTimeout(() => {
+        unsubscribe();
+      }, 5000); // Give 5 seconds to get the data
+    };
+
+    // Initial fetch
+    fetchData();
+    
+    // Set up 2-minute interval
+    const interval = setInterval(() => {
+      console.log("DashboardClientContent: Fetching data (2-minute interval)");
+      fetchData();
+    }, 2 * 60 * 1000); // 2 minutes
 
     return () => {
-      console.log("DashboardClientContent: Cleaning up Firebase subscription");
-      unsubscribe();
+      console.log("DashboardClientContent: Cleaning up Firebase subscription and interval");
+      clearInterval(interval);
     };
   }, [initialCustomAlertSettings, lng, t, toast]);
 
