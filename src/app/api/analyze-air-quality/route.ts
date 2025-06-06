@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
@@ -17,30 +16,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
     const prompt = `
-    Analyze the following air quality sensor readings and provide a comprehensive assessment:
+You are an expert air quality analyst. Analyze the following air quality data and provide a comprehensive assessment:
 
-    Sensor Readings:
-    - Carbon Monoxide (CO): ${co} ppm
-    - Volatile Organic Compounds (VOCs): ${vocs} ppm
-    - CH4/LPG: ${ch4Lpg} ppm
-    - PM1.0: ${pm10} µg/m³
-    - PM2.5: ${pm25} µg/m³
-    - PM10: ${pm100} µg/m³
+CO (Carbon Monoxide): ${co} ppm
+VOCs (Volatile Organic Compounds): ${vocs} ppm  
+CH4/LPG: ${ch4Lpg} ppm
+PM1.0: ${pm10} µg/m³
+PM2.5: ${pm25} µg/m³
+PM10: ${pm100} µg/m³
 
-    Please provide your response in the following JSON format:
-    {
-      "overallStatus": "good|moderate|unhealthy",
-      "summary": "Brief overall assessment of air quality",
-      "healthImpact": "Detailed explanation of health effects",
-      "recommendations": ["specific action 1", "specific action 2", "specific action 3"],
-      "riskFactors": ["risk factor 1", "risk factor 2"]
-    }
+Please provide your analysis in JSON format with these exact fields:
+{
+  "overallStatus": "good" | "moderate" | "unhealthy",
+  "summary": "Brief overall assessment",
+  "recommendations": ["array", "of", "recommendations"],
+  "healthImpact": "Description of potential health effects",
+  "riskFactors": ["array", "of", "risk", "factors"]
+}
 
-    Consider WHO and EPA air quality guidelines. Provide practical, actionable recommendations.
-    Respond in ${language === 'fr' ? 'French' : 'English'}.
+Base your assessment on WHO air quality guidelines and provide practical recommendations. Consider the following thresholds:
+- CO: Good <4.5ppm, Moderate 4.5-9ppm, Unhealthy >9ppm
+- PM2.5: Good <12µg/m³, Moderate 12-35µg/m³, Unhealthy >35µg/m³
+- PM10: Good <54µg/m³, Moderate 54-154µg/m³, Unhealthy >154µg/m³
+- VOCs: Good <0.5ppm, Moderate 0.5-3ppm, Unhealthy >3ppm
     `;
 
     const result = await model.generateContent(prompt);
@@ -58,7 +59,7 @@ export async function POST(request: NextRequest) {
       }
     } catch (parseError) {
       console.error('Failed to parse AI response as JSON:', parseError);
-      
+
       // Return a structured fallback based on simple thresholds
       let overallStatus = 'good';
       let healthImpact = 'Air quality is generally acceptable for most people.';
@@ -94,7 +95,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Air quality analysis error:', error);
-    
+
     // Return a fallback analysis if AI fails
     const fallbackAnalysis = {
       overallStatus: 'moderate',
