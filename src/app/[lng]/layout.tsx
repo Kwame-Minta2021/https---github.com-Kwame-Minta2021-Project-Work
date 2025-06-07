@@ -1,48 +1,51 @@
 import type { Metadata } from 'next';
-import { Inter, Roboto_Mono } from 'next/font/google'; // Changed font imports
-import '../globals.css'; // Adjusted path
+import { Inter, Roboto_Mono } from 'next/font/google';
+import '../globals.css';
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/context/theme-provider";
 import { dir } from 'i18next';
 import { languages } from '@/i18n/config';
-import { getTranslations } from '@/i18n'; // Use your getTranslations
+import { getTranslations } from '@/i18n';
 
-const inter = Inter({ // Changed font instantiation
-  variable: '--font-inter', // Changed CSS variable name
+const inter = Inter({
+  variable: '--font-inter',
   subsets: ['latin'],
 });
 
-const robotoMono = Roboto_Mono({ // Changed font instantiation
-  variable: '--font-roboto-mono', // Changed CSS variable name
+const robotoMono = Roboto_Mono({
+  variable: '--font-roboto-mono',
   subsets: ['latin'],
 });
 
+// For generating static paths for internationalized routes
 export async function generateStaticParams() {
   return languages.map((lng) => ({ lng }));
 }
 
+// For localized page metadata
 export async function generateMetadata({ params }: { params: { lng: string } }): Promise<Metadata> {
-  const { lng } = await params;
+  const { lng } = params;
   const { t } = await getTranslations(lng, 'common');
   return {
-    title: t('dashboardTitle'), // Example of using translated title
-    description: 'Air Quality Monitoring Dashboard', // This can also be translated
+    title: t('dashboardTitle'),
+    description: 'Air Quality Monitoring Dashboard',
   };
 }
 
-
-export default async function LocaleLayout({ // Renamed from RootLayout to avoid confusion
+// Layout component with localization
+export default async function LocaleLayout({
   children,
   params,
 }: Readonly<{
   children: React.ReactNode;
   params: Promise<{ lng: string }>;
 }>) {
-  const { lng } = await params; {
+  const { lng } = await params;
+
   return (
     <html lang={lng} dir={dir(lng)} suppressHydrationWarning>
-      <body 
-        className={`${inter.variable} ${robotoMono.variable} antialiased`} // Used updated font variables
+      <body
+        className={`${inter.variable} ${robotoMono.variable} antialiased`}
         suppressHydrationWarning={true}
       >
         <ThemeProvider
