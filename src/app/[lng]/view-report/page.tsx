@@ -9,11 +9,16 @@ import { getTranslations } from '@/i18n';
 import type { Metadata } from 'next';
 
 interface ViewReportPageProps {
-  params: { lng: string };
+  params: {
+    lng: string;
+  };
+  searchParams: { [key: string]: string | string[] | undefined };
 }
 
-export async function generateMetadata({ params: { lng } }: ViewReportPageProps): Promise<Metadata> {
-  const { t } = await getTranslations(lng, 'common');
+export async function generateMetadata(
+  { params }: ViewReportPageProps
+): Promise<Metadata> {
+  const { t } = await getTranslations(params.lng, 'common');
   return {
     title: t('viewReportPageTitle'),
   };

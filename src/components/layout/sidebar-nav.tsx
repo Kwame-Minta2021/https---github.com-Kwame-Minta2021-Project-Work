@@ -22,7 +22,7 @@ export function SidebarNav({ lng }: SidebarNavProps) {
     { href: `/${lng}/dashboard`, labelKey: "sidebarDashboard", icon: LayoutDashboard, sectionId: "" },
     { href: "#realtime", labelKey: "sidebarRealTimeData", icon: Activity, sectionId: "realtime" },
     { href: "#visualizations", labelKey: "sidebarVisualizations", icon: BarChart3, sectionId: "visualizations" },
-    { href: "#analyzer", labelKey: "sidebarAIAnalyzer", icon: Brain, sectionId: "analyzer" },
+    { href: `/${lng}/view-report`, labelKey: "sidebarAIAnalyzer", icon: Brain, sectionId: "" },
   ];
 
   const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string, sectionId: string) => {
